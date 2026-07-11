@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Learning Notes · Vocabulary Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f0f4f9;
+            --card-bg: #ffffff;
+            --primary: #3b6ea5;
+            --primary-light: #e8f0fe;
+            --primary-dark: #2a4f7a;
+            --text: #1e2a3e;
+            --text-secondary: #5a6f8c;
+            --border: #dce4ed;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --transition: 0.25s ease;
+            --green: #34a853;
+            --green-bg: #e6f7e6;
+            --gray: #dadce0;
+            --red: #ea4335;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        .app {
+            max-width: 820px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 28px 30px 36px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px 20px;
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 2px solid var(--bg);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-dark);
+        }
+
+        .header h1 span {
+            font-size: 26px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.25s ease;
+            background: var(--bg);
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2d9249;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-small {
+            padding: 6px 16px;
+            font-size: 13px;
+        }
+
+        .page {
+            display: none;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-bottom: 22px;
+        }
+
+        .input-header .date-label {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .input-header .date-label small {
+            font-weight: 400;
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-left: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .input-group label .emoji {
+            font-size: 20px;
+        }
+
+        .input-group .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px 14px;
+            background: var(--bg);
+            border-radius: 12px;
+            min-height: 52px;
+            border: 2px solid transparent;
+            transition: 0.25s ease;
+            align-items: center;
+        }
+
+        .input-group .tag-container:focus-within {
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .tag {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 4px 12px 4px 14px;
+            border-radius: 30px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 450;
+        }
+
+        .tag .remove {
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            opacity: 0.5;
+            transition: 0.25s ease;
+        }
+
+        .tag .remove:hover {
+            opacity: 1;
+            color: var(--red);
+        }
+
+        .tag-input {
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            padding: 4px 0;
+            min-width: 80px;
+            flex: 1;
+            outline: none;
+            color: var(--text);
+        }
+
+        .tag-input::placeholder {
+            color: #b0c4db;
+            font-size: 14px;
+        }
+
+        .input-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            opacity: 0.7;
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .calendar-nav .month-label {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .calendar-nav .nav-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .calendar-grid .weekday {
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 8px 0 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .calendar-grid .day {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.25s ease;
+            font-size: 15px;
+            font-weight: 450;
+            background: white;
+            border: 1.5px solid transparent;
+        }
+
+        .calendar-grid .day:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            transform: scale(1.04);
+            z-index: 2;
+        }
+
+        .calendar-grid .day.empty {
+            background: transparent;
+            cursor: default;
+            border-color: transparent;
+        }
+
+        .calendar-grid .day.empty:hover {
+            transform: none;
+            background: transparent;
+            border-color: transparent;
+        }
+
+        .calendar-grid .day .dot {
+            font-size: 10px;
+            color: var(--green);
+            margin-top: 1px;
+            line-height: 1;
+        }
+
+        .calendar-grid .day.has-record {
+            background: var(--green-bg);
+            border-color: var(--green);
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .calendar-grid .day.today {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 700;
+        }
+
+        .calendar-legend {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-top: 18px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .calendar-legend .item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .calendar-legend .item .circle {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .calendar-legend .item .circle.green {
+            background: var(--green);
+        }
+
+        .calendar-legend .item .circle.gray {
+            background: var(--gray);
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            margin-bottom: 20px;
+        }
+
+        .detail-header .date-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .detail-header .record-count {
+            font-size: 15px;
+            color: var(--text-secondary);
+            background: var(--bg);
+            padding: 4px 16px;
+            border-radius: 30px;
+        }
+
+        .detail-empty {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-secondary);
+        }
+
+        .detail-empty .emoji-big {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .record-card {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .record-card .record-time {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .record-card .record-time .id-badge {
+            font-weight: 400;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: white;
+            padding: 0 10px;
+            border-radius: 20px;
+            opacity: 0.6;
+        }
+
+        .record-card .record-item {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            margin-top: 4px;
+            align-items: baseline;
+        }
+
+        .record-card .record-item .label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            min-width: 44px;
+        }
+
+        .record-card .record-item .word-tag {
+            background: white;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .record-card .record-item .empty-hint {
+            color: var(--text-secondary);
+            font-size: 13px;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--primary-dark);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 40px;
+            font-size: 15px;
+            font-weight: 450;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: var(--green);
+        }
+
+        .toast.error {
+            background: var(--red);
+        }
+
+        @media (max-width: 600px) {
+            .app {
+                padding: 18px 14px 24px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .calendar-grid .day {
+                font-size: 13px;
+            }
+            .input-header .date-label {
+                font-size: 17px;
+            }
+            .record-card {
+                padding: 14px 16px;
+            }
+            .btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+            .calendar-nav .month-label {
+                font-size: 18px;
+            }
+        }
+        .btn-icon {
+    padding: 4px 14px;
+    font-size: 13px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.btn-icon:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--red);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d33426;
+}
+
+.record-detail-box {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--primary);
+}
+
+.record-detail-box .detail-meta {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.record-detail-box .detail-meta .id-text {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.record-detail-box .detail-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 8px;
+    align-items: baseline;
+}
+
+.record-detail-box .detail-item .label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 60px;
+}
+
+.record-detail-box .detail-item .word-tag {
+    background: white;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 15px;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.record-detail-box .detail-item .empty-hint {
+    color: var(--text-secondary);
+    font-size: 13px;
+    opacity: 0.5;
+}
+.sentence-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.sentence-input-group .sentence-field {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 44px;
+    background: var(--bg);
+    color: var(--text);
+    transition: 0.25s ease;
+}
+
+.sentence-input-group .sentence-field:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: white;
+}
+
+.sentence-input-group .remove-sentence-btn {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    background: var(--red);
+    color: white;
+    font-size: 16px;
+    transition: 0.25s ease;
+}
+
+.sentence-input-group .remove-sentence-btn:hover {
+    background: #d33426;
+    transform: scale(1.05);
+}
+
+
+    </style>
+</head>
+<body>
+
+    <div class="app" id="app">
+        <div class="header">
+            <h1><span>📖</span> Language Learning Notes</h1>
+            <div class="header-actions">
+                <button class="btn btn-outline btn-small" id="btnGoHome">🏠 Calendar</button>
+            </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+        <!-- Input Page -->
+        <div class="page" id="pageInput">
+            <div class="input-header">
+                <div class="date-label">
+                    📝 <span id="inputDateText">2026-07-21</span>
+                    <small id="inputTimeText">14:30</small>
+                </div>
+                <button class="btn btn-outline btn-small" id="btnBackFromInput">← Back</button>
+            </div>
+
+            <div class="input-group">
+                <label><span class="emoji">📖</span> Words</label>
+                <div class="tag-container" id="wordsContainer">
+                    <input class="tag-input" id="wordsInput" placeholder="Type a word, press Enter to add" autofocus>
+                </div>
+                <div class="input-hint">Press Enter or comma after each word to add</div>
+            </div>
+
+            <div class="input-group">
+                <label><span class="emoji">🔗</span> Phrases</label>
+                <div class="tag-container" id="phrasesContainer">
+                    <input class="tag-input" id="phrasesInput" placeholder="Type a phrase, press Enter to add">
+                </div>
+                <div class="input-hint">Press Enter or comma after each phrase to add</div>
+            </div>
+
+            <div class="input-group">
+            <label><span class="emoji">💬</span> Sentences</label>
+            <div id="sentencesContainer">
+               <!-- 句子输入框由 JS 动态渲染 -->
+            </div>
+             <div style="margin-top:8px;">
+             <button class="btn btn-outline btn-small" id="addSentenceBtn">➕ Add Sentence</button>
+            </div>
+             <div class="input-hint">Click "Add Sentence" to add a new sentence input box</div>
+            </div>
+            <!-- 
+            <div class="input-group remark-group">
+                <label><span class="emoji">📝</span> Remark</label>
+                <textarea id="remarkInput" placeholder="Add any notes or context for this record..."></textarea>
+            </div>
+             -->
+            <div class="input-actions">
+                <button class="btn btn-success" id="btnSaveRecord">💾 Save Record</button>
+                <button class="btn btn-outline" id="btnClearInput">Clear All</button>
+            </div>
+        </div>
+
+        <!-- Calendar Page -->
+        <div class="page" class="page active" id="pageCalendar">
+            <div class="calendar-nav">
+                <div class="month-label" id="monthLabel">July 2026</div>
+                <div class="nav-buttons">
+                    <button class="btn btn-outline btn-small" id="btnPrevMonth">◀</button>
+                    <button class="btn btn-outline btn-small" id="btnToday">Today</button>
+                    <button class="btn btn-outline btn-small" id="btnNextMonth">▶</button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="calendar-legend">
+                <span class="item"><span class="circle green"></span> Has records</span>
+                <span class="item"><span class="circle gray"></span> No records</span>
+            </div>
+        </div>
+
+        <!-- Detail Page -->
+        <div class="page" id="pageDetail">
+            <div class="detail-header">
+                <div class="date-title" id="detailDateTitle">📚 2026-07-21</div>
+                <div class="record-count" id="detailRecordCount">Total 0 records</div>
+            </div>
+            <div id="detailContent"></div>
+            <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="btnContinueAdd">➕ Add New Note</button>
+                <button class="btn btn-outline" id="btnBackFromDetail">← Back to Calendar</button>
+            </div>
+        </div>
+        <!-- Detail Page -->
+        <div class="page" id="pageDetail">
+            ...
+        </div>
+
+        <!-- Record Detail Page --> 
+        <div class="page" id="pageRecordDetail">
+            <div class="detail-header">
+                <div class="date-title" id="recordDetailTitle">📄 Record Detail</div>
+                <button class="btn btn-outline btn-small" id="btnBackFromRecordDetail">← Back</button>
+            </div>
+            <div id="recordDetailContent"></div>
+            <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <button class="btn btn-danger" id="btnDeleteRecord">🗑️ Delete</button>
+                <button class="btn btn-outline" id="btnBackFromRecordDetail2">← Back</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // UTILITY
+        // ================================================================
+        function getToday() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2,
+                '0');
+        }
+
+        function getNowTime() {
+            const d = new Date();
+            return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d
+                .getSeconds()).padStart(2, '0');
+        }
+
+        function getNowTimestamp() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2,
+                '0') + '_' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d
+                .getSeconds()).padStart(2, '0');
+        }
+
+        function formatDateDisplay(dateStr) {
+            const parts = dateStr.split('-');
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return monthNames[parseInt(parts[1]) - 1] + ' ' + parseInt(parts[2]) + ', ' + parts[0];
+        }
+
+        function getTimeFromId(id) {
+            const t = id.split('_')[1];
+            if (!t) return '00:00:00';
+            return t.slice(0, 2) + ':' + t.slice(2, 4) + ':' + t.slice(4, 6);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(msg, type) {
+            type = type || 'success';
+            var toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast ' + type;
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(function() {
+                toast.classList.remove('show');
+            }, 2200);
+        }
+
+        // ================================================================
+        // STATE
+        // ================================================================
+        var state = {
+            currentDate: getToday(),
+            calendarYear: new Date().getFullYear(),
+            calendarMonth: new Date().getMonth() + 1,
+            daysWithRecords: [],
+            records: [],
+            currentPage: 'calendar',
+            viewingRecordId: null
+        };
+
+        // ================================================================
+        // TAG INPUT
+        // ================================================================
+        function createTagInput(containerId, inputId) {
+            var container = document.getElementById(containerId);
+            var inputEl = document.getElementById(inputId);
+            var tags = [];
+
+            function render() {
+                var input = container.querySelector('.tag-input');
+                container.innerHTML = '';
+                tags.forEach(function(tag) {
+                    var span = document.createElement('span');
+                    span.className = 'tag';
+                    span.innerHTML = escapeHtml(tag) + ' <span class="remove" data-tag="' + escapeHtml(tag) + '">×</span>';
+                    container.appendChild(span);
+                });
+                container.appendChild(input);
+                input.focus();
+
+                container.querySelectorAll('.remove').forEach(function(el) {
+                    el.addEventListener('click', function(e) {
+                        var tag = this.dataset.tag;
+                        var idx = tags.indexOf(tag);
+                        if (idx !== -1) {
+                            tags.splice(idx, 1);
+                            render();
+                            inputEl.dispatchEvent(new Event('change'));
+                        }
+                    });
+                });
+            }
+
+            function addTag(text) {
+                var trimmed = text.trim();
+                if (!trimmed) return false;
+                if (tags.indexOf(trimmed) !== -1) {
+                    showToast('"' + trimmed + '" already exists', 'error');
+                    return false;
+                }
+                tags.push(trimmed);
+                render();
+                inputEl.value = '';
+                inputEl.dispatchEvent(new Event('change'));
+                return true;
+            }
+
+            function getTags() {
+                return tags.slice();
+            }
+
+            function clear() {
+                tags = [];
+                render();
+                inputEl.value = '';
+                inputEl.dispatchEvent(new Event('change'));
+            }
+
+            inputEl.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    var val = this.value;
+                    if (val.indexOf(',') !== -1) {
+                        var parts = val.split(',').filter(function(s) { return s.trim(); });
+                        parts.forEach(function(p) { addTag(p); });
+                    } else {
+                        addTag(val);
+                    }
+                }
+                if (e.key === 'Backspace' && this.value === '' && tags.length > 0) {
+                    tags.pop();
+                    render();
+                    inputEl.dispatchEvent(new Event('change'));
+                }
+            });
+
+            inputEl.addEventListener('blur', function() {
+                var val = this.value.trim();
+                if (val) {
+                    if (val.indexOf(',') !== -1) {
+                        var parts = val.split(',').filter(function(s) { return s.trim(); });
+                        parts.forEach(function(p) { addTag(p); });
+                    } else {
+                        addTag(val);
+                    }
+                }
+            });
+
+            render();
+            return { getTags: getTags, clear: clear, addTag: addTag };
+        }
+
+        // ================================================================
+        // SENTENCE MANAGER (独立于 tag input)
+        // ================================================================
+        var sentenceValues = [];  // 存储所有句子的数组
+
+        function renderSentences() {
+            var container = document.getElementById('sentencesContainer');
+            if (!container) return;
+            
+            var html = '';
+            
+            if (sentenceValues.length === 0) {
+                html += '<div class="sentence-input-group">';
+                html += '<textarea class="sentence-field" data-index="0" placeholder="Type a sentence..."></textarea>';
+                html += '<button class="remove-sentence-btn" data-index="0" style="display:none;">✕</button>';
+                html += '</div>';
+            } else {
+                sentenceValues.forEach(function(value, index) {
+                    html += '<div class="sentence-input-group">';
+                    html += '<textarea class="sentence-field" data-index="' + index + '" placeholder="Type a sentence...">' + escapeHtml(value || '') + '</textarea>';
+                    html += '<button class="remove-sentence-btn" data-index="' + index + '">✕</button>';
+                    html += '</div>';
+                });
+            }
+            
+            container.innerHTML = html;
+            bindSentenceEvents();
+        }
+
+        function bindSentenceEvents() {
+            document.querySelectorAll('.sentence-field').forEach(function(textarea) {
+                // 移除之前绑定的监听器（防止重复绑定）
+                textarea.removeEventListener('input', sentenceInputHandler);
+                textarea.addEventListener('input', sentenceInputHandler);
+            });
+            document.querySelectorAll('.remove-sentence-btn').forEach(function(btn) {
+                btn.removeEventListener('click', sentenceRemoveHandler);
+                btn.addEventListener('click', sentenceRemoveHandler);
+            });
+        }
+
+        function sentenceInputHandler() {
+            var index = parseInt(this.dataset.index);
+            if (!isNaN(index) && index >= 0 && index < sentenceValues.length) {
+                sentenceValues[index] = this.value;
+            }
+        }
+
+        function sentenceRemoveHandler() {
+            var index = parseInt(this.dataset.index);
+            if (!isNaN(index) && index >= 0 && index < sentenceValues.length) {
+                sentenceValues.splice(index, 1);
+                renderSentences();
+            }
+        }
+
+        // 添加新句子
+        document.getElementById('addSentenceBtn').addEventListener('click', function() {
+            sentenceValues.push('');
+            renderSentences();
+            // 聚焦到新添加的输入框
+            var fields = document.querySelectorAll('.sentence-field');
+            if (fields.length > 0) {
+                fields[fields.length - 1].focus();
+            }
+        });
+
+        // 获取所有句子
+        function getSentences() {
+        // 从输入框中收集最新数据
+        document.querySelectorAll('.sentence-field').forEach(function(textarea) {
+            var index = parseInt(textarea.dataset.index);
+            // 确保 index 是有效数字
+            if (!isNaN(index) && index >= 0 && index < sentenceValues.length) {
+                sentenceValues[index] = textarea.value;
+            }
+        });
+        // 过滤掉空字符串
+        return sentenceValues.filter(function(s) { return s && s.trim() !== ''; });
+        }
+
+        // 清空所有句子
+        function clearSentences() {
+            sentenceValues = [];
+            renderSentences();
+        }
+
+        // 设置句子（用于编辑时填充）
+        function setSentences(sentences) {
+            sentenceValues = sentences.slice();
+            renderSentences();
+        }
+
+        // ================================================================
+        // INIT
+        // ================================================================
+        var wordsTag = createTagInput('wordsContainer', 'wordsInput');
+        var phrasesTag = createTagInput('phrasesContainer', 'phrasesInput');
+        //var sentencesTag = createTagInput('sentencesContainer', 'sentencesInput');
+
+        // ================================================================
+        // API
+        // ================================================================
+        function apiFetch(endpoint, options) {
+            options = options || {};
+            return fetch(endpoint, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                }
+            }).then(function(res) { return res.json(); }).catch(function(e) {
+                console.error('API error:', e);
+                return { success: false, error: 'Network error' };
+            });
+        }
+
+        function saveRecord(date, words, phrases, sentences) {
+            var id = date + '_' + getNowTimestamp().split('_')[1];
+            var data = { id: id, date: date, words: words, phrases: phrases, sentences: sentences };
+            return apiFetch('/record', { method: 'POST', body: JSON.stringify(data) });
+        }
+
+        function fetchRecords(date) {
+            return apiFetch('/records?date=' + date);
+        }
+
+        function fetchCalendar(year, month) {
+            return apiFetch('/calendar?year=' + year + '&month=' + month);
+        }
+
+        function deleteRecord(id) {
+            return apiFetch('/record/' + id, { method: 'DELETE' });
+        }
+
+
+        // ================================================================
+        // PAGE NAVIGATION
+        // ================================================================
+        function showPage(page) {
+            var pages = ['pageInput', 'pageCalendar', 'pageDetail'];
+            pages.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (id === 'page' + page.charAt(0).toUpperCase() + page.slice(1)) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+            // Manual mapping
+  
+            document.getElementById('pageInput').classList.toggle('active', page === 'input');
+            document.getElementById('pageCalendar').classList.toggle('active', page === 'calendar');
+            document.getElementById('pageDetail').classList.toggle('active', page === 'detail');
+            document.getElementById('pageRecordDetail').classList.toggle('active', page === 'recordDetail');
+            state.currentPage = page;
+        }
+
+        // ================================================================
+        // CALENDAR
+        // ================================================================
+        function renderCalendar() {
+            var year = state.calendarYear;
+            var month = state.calendarMonth;
+            var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+                'November', 'December'
+            ];
+            document.getElementById('monthLabel').textContent = monthNames[month - 1] + ' ' + year;
+
+            fetchCalendar(year, month).then(function(data) {
+                state.daysWithRecords = data.days_with_records || [];
+                buildCalendar();
+            }).catch(function() {
+                state.daysWithRecords = [];
+                buildCalendar();
+            });
+        }
+
+        function buildCalendar() {
+            var year = state.calendarYear;
+            var month = state.calendarMonth;
+            var daysWithRecords = state.daysWithRecords;
+            var firstDay = new Date(year, month - 1, 1).getDay();
+            var daysInMonth = new Date(year, month, 0).getDate();
+            var today = getToday();
+
+            var html = '';
+            var weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            weekdays.forEach(function(w) {
+                html += '<div class="weekday">' + w + '</div>';
+            });
+
+            for (var i = 0; i < firstDay; i++) {
+                html += '<div class="day empty"></div>';
+            }
+
+            for (var day = 1; day <= daysInMonth; day++) {
+                var dateStr = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+                var hasRecord = daysWithRecords.indexOf(day) !== -1;
+                var isToday = dateStr === today;
+                var classes = 'day';
+                if (hasRecord) classes += ' has-record';
+                if (isToday) classes += ' today';
+                html += '<div class="' + classes + '" data-date="' + dateStr + '">' + day + (hasRecord ?'<br><span style="font-size:14px;">✅</span>' : '') + '</div>';
+            }
+
+            document.getElementById('calendarGrid').innerHTML = html;
+
+            document.querySelectorAll('#calendarGrid .day:not(.empty)').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    var date = this.dataset.date;
+                    if (date) onDateClick(date);
+                });
+            });
+        }
+
+        // ================================================================
+        // DATE CLICK
+        // ================================================================
+        function onDateClick(date) {
+            state.currentDate = date;
+            fetchRecords(date).then(function(data) {
+                state.records = data.records || [];
+                if (state.records.length === 0) {
+                    goToInput(date);
+                } else {
+                    goToDetail(date);
+                }
+            }).catch(function() {
+                state.records = [];
+                goToInput(date);
+            });
+        }
+
+        // ================================================================
+        // INPUT PAGE
+        // ================================================================
+        function goToInput(date) {
+            state.currentDate = date;
+            document.getElementById('inputDateText').textContent = date;
+            document.getElementById('inputTimeText').textContent = getNowTime();
+            wordsTag.clear();
+            phrasesTag.clear();
+            //sentencesTag.clear();
+            clearSentences(); 
+            showPage('input');
+            setTimeout(function() {
+                document.getElementById('wordsInput').focus();
+            }, 100);
+        }
+
+        // ================================================================
+        // DETAIL PAGE
+        // ================================================================
+        function goToDetail(date) {
+            state.currentDate = date;
+            document.getElementById('detailDateTitle').textContent = '📚 ' + formatDateDisplay(date);
+            document.getElementById('detailRecordCount').textContent = 'Total ' + state.records.length + ' records';
+
+            var content = document.getElementById('detailContent');
+
+            if (state.records.length === 0) {
+                content.innerHTML =
+                    '<div class="detail-empty"><span class="emoji-big">📭</span><p>No records for this day</p><button class="btn btn-primary" style="margin-top:16px;" id="btnStartRecordFromEmpty">Start Recording</button></div>';
+                document.getElementById('btnStartRecordFromEmpty').addEventListener('click', function() {
+                    goToInput(date);
+                });
+                showPage('detail');
+                return;
+            }
+
+            var sorted = state.records.slice().sort(function(a, b) {
+                if (a.id > b.id) return -1;
+                if (a.id < b.id) return 1;
+                return 0;
+            });
+
+            var html = '';
+            sorted.forEach(function(rec, idx) {
+                var time = getTimeFromId(rec.id);
+                var words = rec.words || [];
+                var phrases = rec.phrases || [];
+                var sentences = rec.sentences || [];
+
+                html += '<div class="record-card">';
+                html += '<div class="record-time" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">';
+                html += '<span>📌 #' + (idx + 1) + '  ' + time +
+                    ' <span class="id-badge">' + rec.id + '</span></span>';
+                html += '<button class="btn-icon detail-btn" data-id="' + rec.id + '">📄 Detail</button>';
+                html += '</div>';
+
+                html += '<div class="record-item"><span class="label">📖 Words</span>';
+
+                if (words.length) {
+                    words.forEach(function(w) { html += '<span class="word-tag">' + escapeHtml(w) + '</span>'; });
+                } else {
+                    html += '<span class="empty-hint">(none)</span>';
+                }
+                html += '</div>';
+                html +=
+                '<div class="record-item" style="margin-top:4px;"><span class="label">🔗 Phrases</span>';
+                if (phrases.length) {
+                    phrases.forEach(function(p) { html += '<span class="word-tag">' + escapeHtml(p) + '</span>'; });
+                } else {
+                    html += '<span class="empty-hint">(none)</span>';
+                }
+                html += '</div>';
+                html +=
+                '<div class="record-item" style="margin-top:4px;"><span class="label">💬 Sentences</span>';
+                if (sentences.length) {
+                    sentences.forEach(function(s) { html += '<span class="word-tag">' + escapeHtml(s) + '</span>'; });
+                } else {
+                    html += '<span class="empty-hint">(none)</span>';
+                }
+                html += '</div>';
+                html += '</div>';
+            });
+
+            content.innerHTML = html;
+            showPage('detail');
+
+            // 绑定 Detail 按钮
+            document.querySelectorAll('.detail-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+            var id = this.dataset.id;
+            var record = state.records.find(function(r) { return r.id === id; });
+            if (record) {
+                goToRecordDetail(record);
+            }
+            });
+});
+        }
+
+// ================================================================
+// RECORD DETAIL PAGE
+// ================================================================
+        function goToRecordDetail(record) {
+            state.viewingRecordId = record.id;
+            document.getElementById('recordDetailTitle').textContent = '📄 Record Detail - ' + getTimeFromId(record.id);
+
+            var content = document.getElementById('recordDetailContent');
+            var words = record.words || [];
+            var phrases = record.phrases || [];
+            var sentences = record.sentences || [];
+
+            var html = '';
+            html += '<div class="record-detail-box">';
+            html += '<div class="detail-meta">';
+            html += '<span>🕐 ' + getTimeFromId(record.id) + '</span>';
+            html += '<span class="id-text">' + record.id + '</span>';
+            html += '</div>';
+
+            html += '<div class="detail-item"><span class="label">📖 Words</span>';
+            if (words.length) {
+                words.forEach(function(w) { html += '<span class="word-tag">' + escapeHtml(w) + '</span>'; });
+            } else {
+                html += '<span class="empty-hint">(none)</span>';
+            }
+            html += '</div>';
+
+            html += '<div class="detail-item" style="margin-top:8px;"><span class="label">🔗 Phrases</span>';
+            if (phrases.length) {
+                phrases.forEach(function(p) { html += '<span class="word-tag">' + escapeHtml(p) + '</span>'; });
+            } else {
+                html += '<span class="empty-hint">(none)</span>';
+            }
+            html += '</div>';
+
+            html += '<div class="detail-item" style="margin-top:8px;"><span class="label">💬 Sentences</span>';
+            if (sentences.length) {
+                sentences.forEach(function(s) { html += '<span class="word-tag">' + escapeHtml(s) + '</span>'; });
+            } else {
+                html += '<span class="empty-hint">(none)</span>';
+            }
+            html += '</div>';
+
+            html += '</div>';
+            content.innerHTML = html;
+            showPage('recordDetail');
+        }
+
+
+        // ================================================================
+        // SAVE
+        // ================================================================
+        function handleSaveRecord() {
+            var date = state.currentDate;
+            var words = wordsTag.getTags();
+            var phrases = phrasesTag.getTags();
+            //var sentences = sentencesTag.getTags();
+            var sentences = getSentences();
+
+            if (words.length === 0 && phrases.length === 0 && sentences.length === 0) {
+                showToast('Please enter at least one word, phrase, or sentence', 'error');
+                return;
+            }
+
+            saveRecord(date, words, phrases, sentences).then(function(result) {
+                if (result.success) {
+                    showToast('✅ Record saved! (' + (words.length + phrases.length + sentences.length) +
+                        ' items)');
+                    wordsTag.clear();
+                    phrasesTag.clear();
+                    clearSentences();
+                    return fetchRecords(date);
+                } else {
+                    showToast('❌ Save failed: ' + (result.error || 'Unknown error'), 'error');
+                    return null;
+                }
+            }).then(function(data) {
+                if (data) {
+                    state.records = data.records || [];
+                    goToDetail(date);
+                }
+            }).catch(function(e) {
+                console.error('Save failed:', e);
+                showToast('❌ Network error, please check if server is running', 'error');
+            });
+        }
+
+        // ================================================================
+        // EVENT BINDINGS
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // Navigation
+            document.getElementById('btnGoHome').addEventListener('click', function() {
+                renderCalendar();
+                showPage('calendar');
+            });
+
+            document.getElementById('btnBackFromInput').addEventListener('click', function() {
+                renderCalendar();
+                showPage('calendar');
+            });
+
+            document.getElementById('btnBackFromDetail').addEventListener('click', function() {
+                renderCalendar();
+                showPage('calendar');
+            });
+
+            document.getElementById('btnContinueAdd').addEventListener('click', function() {
+                goToInput(state.currentDate);
+            });
+
+            // Calendar nav
+            document.getElementById('btnPrevMonth').addEventListener('click', function() {
+                state.calendarMonth -= 1;
+                if (state.calendarMonth < 1) {
+                    state.calendarMonth = 12;
+                    state.calendarYear -= 1;
+                }
+                renderCalendar();
+            });
+
+            document.getElementById('btnNextMonth').addEventListener('click', function() {
+                state.calendarMonth += 1;
+                if (state.calendarMonth > 12) {
+                    state.calendarMonth = 1;
+                    state.calendarYear += 1;
+                }
+                renderCalendar();
+            });
+
+            document.getElementById('btnToday').addEventListener('click', function() {
+                var today = new Date();
+                state.calendarYear = today.getFullYear();
+                state.calendarMonth = today.getMonth() + 1;
+                renderCalendar();
+            });
+
+            // Save
+            document.getElementById('btnSaveRecord').addEventListener('click', handleSaveRecord);
+
+            // Clear
+            document.getElementById('btnClearInput').addEventListener('click', function() {
+                wordsTag.clear();
+                phrasesTag.clear();
+                clearSentences();
+                showToast('Cleared all fields', 'success');
+            });
+
+            // Enter key on input fields triggers save
+            document.getElementById('wordsInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    handleSaveRecord();
+                }
+            });
+            document.getElementById('phrasesInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    handleSaveRecord();
+                }
+            });
+            
+
+            // Record Detail - Back
+            document.getElementById('btnBackFromRecordDetail').addEventListener('click', function() {
+                goToDetail(state.currentDate);
+            });
+            document.getElementById('btnBackFromRecordDetail2').addEventListener('click', function() {
+                goToDetail(state.currentDate);
+            });
+
+            // Record Detail - Delete
+            document.getElementById('btnDeleteRecord').addEventListener('click', function() {
+                var id = state.viewingRecordId;
+                if (!id) return;
+                if (confirm('Delete this record?')) {
+                    deleteRecord(id).then(function(result) {
+                        if (result.success) {
+                            showToast('✅ Record deleted', 'success');
+                            return fetchRecords(state.currentDate);
+                        } else {
+                            showToast('❌ Delete failed: ' + (result.error || 'Unknown error'), 'error');
+                            return null;
+                        }
+                    }).then(function(data) {
+                        if (data) {
+                            state.records = data.records || [];
+                            if (state.records.length === 0) {
+                                goToInput(state.currentDate);
+                            } else {
+                                goToDetail(state.currentDate);
+                            }
+                        }
+                    }).catch(function(e) {
+                        console.error('Delete failed:', e);
+                        showToast('❌ Network error', 'error');
+                    });
+                }
+            });
+
+            console.log('事件绑定已执行');
+
+            // Initial load
+            renderCalendar();
+            showPage('calendar');
+        });
+    </script>
+
+</body>
+</html>
