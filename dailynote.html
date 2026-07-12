@@ -650,8 +650,150 @@
     transform: scale(1.05);
 }
 
+/* ===== 条目列表样式 ===== */
+.entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
 
-    </style>
+.entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px 4px 14px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+}
+
+/* 句子条目 - 占满整行 */
+.entry-item.sentence-item {
+    width: 100%;
+    min-height: 36px;
+}
+
+.entry-item .entry-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+.entry-item .entry-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+.entry-item .entry-actions button {
+    padding: 2px 10px;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.entry-item .entry-actions .del-btn {
+    background: #fee;
+    color: var(--red);
+}
+
+.entry-item .entry-actions .del-btn:hover {
+    background: var(--red);
+    color: white;
+}
+
+/* 添加按钮 */
+.add-entry-btn {
+    padding: 4px 14px;
+    border: 1.5px dashed var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    margin-top: 4px;
+}
+
+.add-entry-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* ===== 网格布局：一行两个 ===== */
+.entry-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.entry-grid .entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px 4px 14px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    min-height: 32px;
+}
+
+.entry-grid .entry-item .entry-text {
+    flex: 1;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.entry-grid .entry-item .entry-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: 6px;
+}
+
+/* 句子保持一行一个 */
+.entry-list-sentence {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.entry-list-sentence .entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 10px 4px 14px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    min-height: 32px;
+    width: 100%;
+}
+
+.entry-list-sentence .entry-item .entry-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+/* 移动端适配 */
+@media (max-width: 500px) {
+    .entry-grid {
+        grid-template-columns: 1fr;  /* 小屏幕变成一行一个 */
+    }
+}
+
+</style>
 </head>
 <body>
 
@@ -1255,53 +1397,174 @@
         }
 
 // ================================================================
-// RECORD DETAIL PAGE
+// RECORD DETAIL PAGE (支持删除和新增)
 // ================================================================
-        function goToRecordDetail(record) {
-            state.viewingRecordId = record.id;
-            document.getElementById('recordDetailTitle').textContent = '📄 Record Detail - ' + getTimeFromId(record.id);
+function goToRecordDetail(record) {
+    state.viewingRecordId = record.id;
+    document.getElementById('recordDetailTitle').textContent = '📄 Record Detail - ' + getTimeFromId(record.id);
 
-            var content = document.getElementById('recordDetailContent');
-            var words = record.words || [];
-            var phrases = record.phrases || [];
-            var sentences = record.sentences || [];
+    var content = document.getElementById('recordDetailContent');
+    var words = record.words || [];
+    var phrases = record.phrases || [];
+    var sentences = record.sentences || [];
 
-            var html = '';
-            html += '<div class="record-detail-box">';
-            html += '<div class="detail-meta">';
-            html += '<span>🕐 ' + getTimeFromId(record.id) + '</span>';
-            html += '<span class="id-text">' + record.id + '</span>';
-            html += '</div>';
+    var html = '';
+    // ===== 单词（一行两个） =====
+    html += '<div style="margin-bottom:16px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<span style="font-weight:600;color:var(--text-secondary);">📖 单词</span>';
+    html += '<button class="add-entry-btn" data-type="words">+ 添加</button>';
+    html += '</div>';
+    html += '<div class="entry-grid" id="entry-words">';
+    if (words.length === 0) {
+        html += '<div class="entry-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;grid-column:1/3;">(无)</div>';
+    } else {
+        words.forEach(function(w, idx) {
+            html += renderEntryItemGrid('words', idx, w, false);
+        });
+    }
+    html += '</div></div>';
 
-            html += '<div class="detail-item"><span class="label">📖 Words</span>';
-            if (words.length) {
-                words.forEach(function(w) { html += '<span class="word-tag">' + escapeHtml(w) + '</span>'; });
-            } else {
-                html += '<span class="empty-hint">(none)</span>';
+    // ===== 短语（一行两个） =====
+    html += '<div style="margin-bottom:16px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<span style="font-weight:600;color:var(--text-secondary);">🔗 短语</span>';
+    html += '<button class="add-entry-btn" data-type="phrases">+ 添加</button>';
+    html += '</div>';
+    html += '<div class="entry-grid" id="entry-phrases">';
+    if (phrases.length === 0) {
+        html += '<div class="entry-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;grid-column:1/3;">(无)</div>';
+    } else {
+        phrases.forEach(function(p, idx) {
+            html += renderEntryItemGrid('phrases', idx, p, false);
+        });
+    }
+    html += '</div></div>';
+
+    // ===== 句子（每个句子单独一行） =====
+    html += '<div style="margin-bottom:16px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<span style="font-weight:600;color:var(--text-secondary);">💬 句子</span>';
+    html += '<button class="add-entry-btn" data-type="sentences">+ 添加</button>';
+    html += '</div>';
+    html += '<div class="entry-list" id="entry-sentences">';
+    if (sentences.length === 0) {
+        html += '<div class="entry-item sentence-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;">(无)</div>';
+    } else {
+        sentences.forEach(function(s, idx) {
+            html += renderEntryItem('sentences', idx, s, true);
+        });
+    }
+    html += '</div></div>';
+
+    content.innerHTML = html;
+    showPage('recordDetail');
+
+    // 绑定删除和添加事件
+    bindEntryEvents(record);
+}
+
+
+// ================================================================
+// 渲染单词/短语（一行两个）
+// ================================================================
+function renderEntryItemGrid(type, index, text) {
+    return '<div class="entry-item" data-type="' + type + '" data-index="' + index + '">' +
+        '<span class="entry-text" title="' + escapeHtml(text) + '">' + escapeHtml(text) + '</span>' +
+        '<div class="entry-actions">' +
+        '<button class="translate-btn" data-type="' + type + '" data-index="' + index + '" data-text="' + escapeHtml(text) + '">🌐</button>' +
+        '<button class="del-btn" data-type="' + type + '" data-index="' + index + '">✕</button>' +
+        '</div>' +
+        '</div>';
+}
+
+// ================================================================
+// 渲染句子（一行一个）
+// ================================================================
+function renderEntryItemSentence(type, index, text) {
+    return '<div class="entry-item" data-type="' + type + '" data-index="' + index + '">' +
+        '<span class="entry-text">' + escapeHtml(text) + '</span>' +
+        '<div class="entry-actions">' +
+        '<button class="translate-btn" data-type="' + type + '" data-index="' + index + '" data-text="' + escapeHtml(text) + '">🌐</button>' +
+        '<button class="del-btn" data-type="' + type + '" data-index="' + index + '">✕</button>' +
+        '</div>' +
+        '</div>';
+}
+
+// ================================================================
+// 渲染单个条目
+// ================================================================
+function renderEntryItem(type, index, text, isSentence) {
+    var cls = 'entry-item';
+    if (isSentence) cls += ' sentence-item';
+    return '<div class="' + cls + '" data-type="' + type + '" data-index="' + index + '">' +
+        '<span class="entry-text">' + escapeHtml(text) + '</span>' +
+        '<div class="entry-actions">' +
+        '<button class="del-btn" data-type="' + type + '" data-index="' + index + '">✕</button>' +
+        '</div>' +
+        '</div>';
+}
+
+// ================================================================
+// 绑定条目事件（删除 + 添加）
+// ================================================================
+function bindEntryEvents(record) {
+    var recordId = record.id;
+
+    // ---- 删除按钮 ----
+    document.querySelectorAll('#recordDetailContent .del-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var type = this.dataset.type;
+            var index = parseInt(this.dataset.index);
+            if (confirm('删除这个' + (type === 'words' ? '单词' : type === 'phrases' ? '短语' : '句子') + '？')) {
+                // 从 record 中移除
+                record[type].splice(index, 1);
+                // 更新后端
+                updateRecord(recordId, record.words, record.phrases, record.sentences).then(function(result) {
+                    if (result.success) {
+                        showToast('✅ 已删除', 'success');
+                        // 重新渲染详情页
+                        goToRecordDetail(record);
+                        // 同时更新 state.records
+                        var stateRecord = state.records.find(function(r) { return r.id === recordId; });
+                        if (stateRecord) {
+                            stateRecord.words = record.words;
+                            stateRecord.phrases = record.phrases;
+                            stateRecord.sentences = record.sentences;
+                        }
+                    } else {
+                        showToast('❌ 删除失败: ' + (result.error || '未知错误'), 'error');
+                    }
+                });
             }
-            html += '</div>';
+        });
+    });
 
-            html += '<div class="detail-item" style="margin-top:8px;"><span class="label">🔗 Phrases</span>';
-            if (phrases.length) {
-                phrases.forEach(function(p) { html += '<span class="word-tag">' + escapeHtml(p) + '</span>'; });
-            } else {
-                html += '<span class="empty-hint">(none)</span>';
+    // ---- 添加按钮 ----
+    document.querySelectorAll('#recordDetailContent .add-entry-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var type = this.dataset.type;
+            var newText = prompt('输入新的' + (type === 'words' ? '单词' : type === 'phrases' ? '短语' : '句子') + '：');
+            if (newText && newText.trim()) {
+                record[type].push(newText.trim());
+                updateRecord(recordId, record.words, record.phrases, record.sentences).then(function(result) {
+                    if (result.success) {
+                        showToast('✅ 已添加', 'success');
+                        goToRecordDetail(record);
+                        var stateRecord = state.records.find(function(r) { return r.id === recordId; });
+                        if (stateRecord) {
+                            stateRecord.words = record.words;
+                            stateRecord.phrases = record.phrases;
+                            stateRecord.sentences = record.sentences;
+                        }
+                    } else {
+                        showToast('❌ 添加失败: ' + (result.error || '未知错误'), 'error');
+                    }
+                });
             }
-            html += '</div>';
-
-            html += '<div class="detail-item" style="margin-top:8px;"><span class="label">💬 Sentences</span>';
-            if (sentences.length) {
-                sentences.forEach(function(s) { html += '<span class="word-tag">' + escapeHtml(s) + '</span>'; });
-            } else {
-                html += '<span class="empty-hint">(none)</span>';
-            }
-            html += '</div>';
-
-            html += '</div>';
-            content.innerHTML = html;
-            showPage('recordDetail');
-        }
-
+        });
+    });
+}
 
         // ================================================================
         // SAVE
@@ -1339,6 +1602,14 @@
                 console.error('Save failed:', e);
                 showToast('❌ Network error, please check if server is running', 'error');
             });
+        }
+
+        // ================================================================
+        // update record
+        // ================================================================
+        function updateRecord(id, words, phrases, sentences) {
+            var data = { words: words, phrases: phrases, sentences: sentences };
+            return apiFetch('/record/' + id, { method: 'PUT', body: JSON.stringify(data) });
         }
 
         // ================================================================
