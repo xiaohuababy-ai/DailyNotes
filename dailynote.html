@@ -556,15 +556,15 @@
 .record-detail-box {
     background: var(--bg);
     border-radius: var(--radius-sm);
-    padding: 24px 28px;
+    padding: 48px 56px;  /* 原来 24px 28px → 两倍 */
     margin-bottom: 20px;
-    border-left: 4px solid var(--primary);
+    border-left: 6px solid var(--primary);  /* 原来 4px → 6px */
 }
 
 .record-detail-box .detail-meta {
-    font-size: 14px;
+    font-size: 18px;  /* 原来 14px → 18px */
     color: var(--text-secondary);
-    margin-bottom: 16px;
+    margin-bottom: 24px;  /* 原来 16px → 24px */
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -581,26 +581,27 @@
 .record-detail-box .detail-item {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 8px;
-    margin-top: 8px;
+    gap: 8px 16px;  /* 原来 4px 8px → 8px 16px */
+    margin-top: 16px;  /* 原来 8px → 16px */
     align-items: baseline;
 }
 
 .record-detail-box .detail-item .label {
-    font-size: 14px;
+    font-size: 20px;  /* 原来 14px → 20px */
     font-weight: 600;
     color: var(--text-secondary);
-    min-width: 60px;
+    min-width: 80px;  /* 原来 60px → 80px */
 }
 
 .record-detail-box .detail-item .word-tag {
     background: white;
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 15px;
+    padding: 8px 24px;  /* 原来 4px 14px → 8px 24px */
+    border-radius: 30px;  /* 原来 20px → 30px */
+    font-size: 24px;  /* 原来 15px → 24px */
     color: var(--text);
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);  /* 原来 1px → 2px */
 }
+
 
 .record-detail-box .detail-item .empty-hint {
     color: var(--text-secondary);
@@ -666,7 +667,7 @@
     background: white;
     border-radius: 8px;
     border: 1px solid var(--border);
-    font-size: 14px;
+    font-size: 20px;
 }
 
 /* 句子条目 - 占满整行 */
@@ -708,15 +709,26 @@
 
 /* 添加按钮 */
 .add-entry-btn {
-    padding: 4px 14px;
-    border: 1.5px dashed var(--border);
-    border-radius: 20px;
+    padding: 8px 24px;  /* 原来 4px 14px → 8px 24px */
+    border: 2px dashed var(--border);  /* 原来 1.5px → 2px */
+    border-radius: 30px;  /* 原来 20px → 30px */
     background: transparent;
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 18px;  /* 原来 13px → 18px */
     cursor: pointer;
     transition: 0.2s ease;
     margin-top: 4px;
+}
+
+/* 删除和翻译按钮 */
+.entry-item .entry-actions .del-btn,
+.entry-item .entry-actions .translate-btn {
+    padding: 4px 16px;  /* 原来 2px 10px/8px → 4px 16px */
+    border: none;
+    border-radius: 30px;  /* 原来 20px → 30px */
+    font-size: 18px;  /* 原来 12px → 18px */
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
 .add-entry-btn:hover {
@@ -729,20 +741,36 @@
 .entry-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-top: 4px;
+    gap: 12px;
+    margin-top: 8px;
 }
 
+/* 单词/短语网格（一行两个） */
 .entry-grid .entry-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 10px 4px 14px;
+    padding: 10px 18px 10px 22px;  /* 原来 4px 10px 4px 14px → 约两倍 */
     background: white;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 14px;
-    min-height: 32px;
+    border-radius: 12px;  /* 原来 8px → 12px */
+    border: 2px solid var(--border);  /* 原来 1px → 2px */
+    font-size: 20px;  /* 原来 14px → 22px */
+    min-height: 52px;  /* 原来 32px → 52px */
+}
+
+/* 句子列表（一行一个） */
+.entry-list-sentence .entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;  /* 增大内边距 */
+    background: white;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    font-size: 22px !important;  /* 强制字体大小 */
+    min-height: 56px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .entry-grid .entry-item .entry-text {
@@ -751,6 +779,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+     font-size: 20px;  /* ← 加上这一行 */
 }
 
 .entry-grid .entry-item .entry-actions {
@@ -764,26 +793,17 @@
 .entry-list-sentence {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 4px;
+    gap: 12px;
+    margin-top: 8px;
 }
 
-.entry-list-sentence .entry-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 10px 4px 14px;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 14px;
-    min-height: 32px;
-    width: 100%;
-}
 
+
+/* 句子列表中的文字 */
 .entry-list-sentence .entry-item .entry-text {
     flex: 1;
     word-break: break-word;
+    font-size: 20px;  /* ← 加上这一行，和单词/短语保持一致 */
 }
 
 /* 移动端适配 */
@@ -1412,7 +1432,7 @@ function goToRecordDetail(record) {
     // ===== 单词（一行两个） =====
     html += '<div style="margin-bottom:16px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-    html += '<span style="font-weight:600;color:var(--text-secondary);">📖 单词</span>';
+    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">📖 单词</span>';
     html += '<button class="add-entry-btn" data-type="words">+ 添加</button>';
     html += '</div>';
     html += '<div class="entry-grid" id="entry-words">';
@@ -1428,7 +1448,7 @@ function goToRecordDetail(record) {
     // ===== 短语（一行两个） =====
     html += '<div style="margin-bottom:16px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-    html += '<span style="font-weight:600;color:var(--text-secondary);">🔗 短语</span>';
+    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">🔗 短语</span>';
     html += '<button class="add-entry-btn" data-type="phrases">+ 添加</button>';
     html += '</div>';
     html += '<div class="entry-grid" id="entry-phrases">';
@@ -1444,7 +1464,7 @@ function goToRecordDetail(record) {
     // ===== 句子（每个句子单独一行） =====
     html += '<div style="margin-bottom:16px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-    html += '<span style="font-weight:600;color:var(--text-secondary);">💬 句子</span>';
+    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">💬 句子</span>';
     html += '<button class="add-entry-btn" data-type="sentences">+ 添加</button>';
     html += '</div>';
     html += '<div class="entry-list" id="entry-sentences">';
