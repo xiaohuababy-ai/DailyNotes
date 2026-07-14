@@ -813,6 +813,156 @@
     }
 }
 
+/* ================================================================
+   复习模式样式
+   ================================================================ */
+.review-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.review-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 60px 40px;
+    max-width: 700px;
+    width: 100%;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+    border: 2px solid var(--bg);
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.review-card .review-word {
+    font-size: 48px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.review-card .review-tag {
+    font-size: 16px;
+    color: var(--text-secondary);
+    background: var(--bg);
+    padding: 4px 16px;
+    border-radius: 30px;
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.review-card .review-progress {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+/* 倒计时圆环 */
+.timer-ring {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    margin: 16px auto 8px;
+}
+
+.timer-ring svg {
+    transform: rotate(-90deg);
+}
+
+.timer-ring .bg-circle {
+    fill: none;
+    stroke: var(--bg);
+    stroke-width: 4;
+}
+
+.timer-ring .progress-circle {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+.timer-ring .timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* 复习完成 */
+.review-complete {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.review-complete .big-emoji {
+    font-size: 72px;
+    display: block;
+    margin-bottom: 16px;
+}
+
+.review-complete h2 {
+    font-size: 28px;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.review-complete p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+/* 复习控制按钮 */
+.review-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+/* 小屏幕适配 */
+@media (max-width: 500px) {
+    .review-card {
+        padding: 32px 20px;
+        min-height: 200px;
+    }
+    .review-card .review-word {
+        font-size: 32px;
+    }
+    .timer-ring {
+        width: 56px;
+        height: 56px;
+    }
+    .timer-ring .timer-text {
+        font-size: 18px;
+    }
+}
+
+#pageReview {
+    display: none;
+}
+
+#pageReview.active {
+    display: block;
+}
+
+
 </style>
 </head>
 <body>
@@ -901,6 +1051,7 @@
             <div id="detailContent"></div>
             <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="btnContinueAdd">➕ Add New Note</button>
+             
                 <button class="btn btn-outline" id="btnBackFromDetail">← Back to Calendar</button>
             </div>
         </div>
@@ -913,17 +1064,40 @@
         <div class="page" id="pageRecordDetail">
             <div class="detail-header">
                 <div class="date-title" id="recordDetailTitle">📄 Record Detail</div>
-                <button class="btn btn-outline btn-small" id="btnBackFromRecordDetail">← Back</button>
+                <button class="btn btn-primary" id="btnReviewRecord" style="background:#f9ab00;color:white;">📖 Review</button>
+                <button class="btn btn-outline " id="btnBackFromRecordDetail">← Back</button>
             </div>
             <div id="recordDetailContent"></div>
-            <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between;">
+            <div>
                 <button class="btn btn-danger" id="btnDeleteRecord">🗑️ Delete</button>
+            </div>
+
+            <div>
+             
                 <button class="btn btn-outline" id="btnBackFromRecordDetail2">← Back</button>
+            </div>
+        </div>
+
+
+        </div>
+                <!-- Review Page -->
+        <div class="page" id="pageReview">
+            <div class="detail-header">
+                <div class="date-title" id="reviewTitle">📖 Review Mode</div>
+                <button class="btn btn-outline" id="btnExitReview">✕ Exit</button>
+            </div>
+            <div id="reviewContent">
+                <!-- 由 JS 动态渲染 -->
             </div>
         </div>
     </div>
 
     <script>
+
+        var isRendering = false;
+        var isSpeaking = false;  // 防止重复朗读
+
         // ================================================================
         // UTILITY
         // ================================================================
@@ -1238,8 +1412,360 @@
             document.getElementById('pageCalendar').classList.toggle('active', page === 'calendar');
             document.getElementById('pageDetail').classList.toggle('active', page === 'detail');
             document.getElementById('pageRecordDetail').classList.toggle('active', page === 'recordDetail');
+            document.getElementById('pageReview').classList.toggle('active', page === 'review');
             state.currentPage = page;
         }
+
+        // ================================================================
+        // 复习模式
+        // ================================================================
+        var reviewItems = [];          // 当前复习的词条列表
+        var reviewIndex = 0;           // 当前显示到第几个
+        var reviewTimer = null;        // 计时器句柄
+        var reviewCountdown = 5;       // 倒计时秒数
+        var isReviewPaused = false;
+        var reviewTotal = 0;
+        var isRendering = false;
+        var isSpeaking = false;
+
+        // ================================================================
+        // 进入复习模式
+        // ================================================================
+        function goToReview(record) {
+            
+            // ⭐ 重置所有状态
+            if (reviewTimer) {
+                clearInterval(reviewTimer);
+                reviewTimer = null;
+            }
+            isRendering = false;
+            isSpeaking = false;
+            isReviewPaused = false;
+            reviewIndex = 0;
+            reviewTotal = 0;
+            reviewCountdown = 5;
+
+            // 合并所有词条
+            var items = [];
+            record.words.forEach(function(w) { items.push({ type: 'word', text: w }); });
+            record.phrases.forEach(function(p) { items.push({ type: 'phrase', text: p }); });
+            record.sentences.forEach(function(s) { items.push({ type: 'sentence', text: s }); });
+
+            if (items.length === 0) {
+                showToast('⚠️ 这条记录还没有内容可以复习', 'error');
+                return;
+            }
+
+            // 打乱顺序（Fisher-Yates 洗牌算法）
+            for (var i = items.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = items[i];
+                items[i] = items[j];
+                items[j] = temp;
+            }
+
+            reviewItems = items;
+            reviewIndex = 0;
+            reviewTotal = items.length;
+            isReviewPaused = false;
+
+            //document.getElementById('reviewTitle').textContent = '📖 Review Mode (' + record.id + ')';
+            document.getElementById('reviewTitle').textContent = '📖 Review Mode ';
+            // 退出复习时返回记录详情页
+            document.getElementById('btnExitReview').addEventListener('click', function() {
+                clearInterval(reviewTimer);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                // 返回到记录详情页，而不是日期列表页
+                var record = state.records.find(function(r) { return r.id === state.viewingRecordId; });
+                if (record) {
+                    goToRecordDetail(record);
+                } else {
+                    goToDetail(state.currentDate);
+                }
+            });
+
+            showPage('review');
+
+            // 延迟执行，确保页面切换完成
+            setTimeout(function() {
+                renderReviewItem();
+            }, 50);
+            
+        }
+
+        // ================================================================
+        // 渲染当前复习条目
+        // ================================================================
+        function renderReviewItem() {
+
+            // ⭐ 防止重复调用
+            if (isRendering) {
+                console.log('⏳ 正在渲染中，跳过本次调用');
+                return;
+            }
+            isRendering = true;
+
+            var container = document.getElementById('reviewContent');
+
+           
+            if (!container) {
+                console.error('❌ reviewContent 容器不存在！');
+                isRendering = false;
+                return;
+            }
+
+            // ⭐ 确保容器可见
+            container.style.display = 'block';
+            container.style.minHeight = '200px';      
+
+            // ⭐ 先清空容器，写入测试内容验证
+            container.innerHTML = '<div style="padding:20px;text-align:center;font-size:18px;">⏳ 加载中...</div>';  
+
+            if (reviewIndex >= reviewTotal) {
+                // 复习完成
+                container.innerHTML = `
+                    <div class="review-complete">
+                        <span class="big-emoji">🎉</span>
+                        <h2>Review Completed！</h2>
+                        <p>You've reviewed ${reviewTotal} items.</p>
+                        <button class="btn btn-primary" onclick="exitReview()">← Back to Detail</button>
+                    </div>
+                `;
+                // 停止朗读
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                return;
+            }
+
+            var item = reviewItems[reviewIndex];
+            if (!item) {
+                console.error('❌ item 为空', reviewIndex, reviewItems);
+                isRendering = false;
+                return;
+            }
+
+            console.log('📝 当前条目:', item);      
+
+            var progress = (reviewIndex + 1) + ' / ' + reviewTotal;
+
+            // ⭐ 构建 HTML（使用简单样式，避免 CSS 问题）
+            var html = '';
+            html += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;padding:20px;">';
+            html += '<div style="background:white;border-radius:16px;padding:40px 30px;max-width:600px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:2px solid #e8f0fe;text-align:center;">';
+            html += '<span style="font-size:14px;color:#5a6f8c;background:#f0f4f9;padding:4px 16px;border-radius:30px;display:inline-block;margin-bottom:12px;">' + item.type + '</span>';
+            html += '<div style="font-size:32px;font-weight:600;color:#1e2a3e;padding:16px 0;word-break:break-word;">' + escapeHtml(item.text) + '</div>';
+            html += '<div style="font-size:14px;color:#5a6f8c;margin-top:8px;">' + progress + '</div>';
+            html += '</div>';
+            html += '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:20px;">';
+            html += '<button class="btn btn-outline" id="reviewPauseBtn" style="padding:8px 20px;">⏸️ pause</button>';
+            html += '<button class="btn btn-outline" id="reviewSkipBtn" style="padding:8px 20px;">⏭️ skip</button>';
+            html += '<button class="btn btn-outline" id="reviewSpeakBtn" style="padding:8px 20px;">🔊 again</button>';
+            html += '</div>';
+            html += '</div>';
+
+            console.log('📝 HTML:', html);
+            container.innerHTML = html;
+            console.log('✅ 内容已设置');
+
+            // 重置倒计时
+            reviewCountdown = 5;
+            updateTimerDisplay();
+
+            // ⭐ 自动朗读（防止重复朗读）
+            isSpeaking = false;
+            setTimeout(function() {
+                if (!isSpeaking) {
+                    isSpeaking = true;
+                    speakText(item.text, detectLanguage(item.text));
+                }
+            }, 2000);
+
+
+
+            // ⭐ 清除旧计时器
+            if (reviewTimer) {
+                clearInterval(reviewTimer);
+                reviewTimer = null;
+            }
+
+            // ⭐ 启动计时器
+            reviewTimer = setInterval(function() {
+                if (isReviewPaused) return;
+                
+                reviewCountdown -= 0.1;
+                if (reviewCountdown <= 0) {
+                    reviewCountdown = 0;
+                    updateTimerDisplay();
+                    // ⭐ 进入下一个
+                    isRendering = false;
+                    reviewIndex++;
+                    renderReviewItem();
+                    return;
+                } else {
+                    updateTimerDisplay();
+                }
+            }, 100);
+
+            bindReviewControls();
+            
+            // ⭐ 释放锁（但注意：计时器可能会立即触发下一个）
+            // 延迟释放，确保计时器已经启动
+            setTimeout(function() {
+                isRendering = false;
+            }, 50);
+
+        }
+
+        // ================================================================
+        // 绑定复习控制按钮
+        // ================================================================
+        function bindReviewControls() {
+            var pauseBtn = document.getElementById('reviewPauseBtn');
+            var skipBtn = document.getElementById('reviewSkipBtn');
+            var speakBtn = document.getElementById('reviewSpeakBtn');
+
+            if (pauseBtn) {
+                var newPause = pauseBtn.cloneNode(true);
+                pauseBtn.parentNode.replaceChild(newPause, pauseBtn);
+                newPause.addEventListener('click', function() {
+                    isReviewPaused = !isReviewPaused;
+                    this.textContent = isReviewPaused ? '▶️ continue' : '⏸️ pause';
+                    if ('speechSynthesis' in window) {
+                        if (isReviewPaused) {
+                            window.speechSynthesis.pause();
+                        } else {
+                            window.speechSynthesis.resume();
+                        }
+                    }
+                });
+            }
+
+            if (skipBtn) {
+                var newSkip = skipBtn.cloneNode(true);
+                skipBtn.parentNode.replaceChild(newSkip, skipBtn);
+                newSkip.addEventListener('click', function() {
+                    if (reviewTimer) {
+                        clearInterval(reviewTimer);
+                        reviewTimer = null;
+                    }
+                    isRendering = false;
+                    reviewIndex++;
+                    renderReviewItem();
+                });
+            }
+
+            if (speakBtn) {
+                var newSpeak = speakBtn.cloneNode(true);
+                speakBtn.parentNode.replaceChild(newSpeak, speakBtn);
+                newSpeak.addEventListener('click', function() {
+                    var item = reviewItems[reviewIndex];
+                    if (item) {
+                        speakText(item.text, detectLanguage(item.text));
+                    }
+                });
+            }
+        }
+
+        function exitReview() {
+            if (reviewTimer) {
+                clearInterval(reviewTimer);
+                reviewTimer = null;
+            }
+            isRendering = false;
+            isSpeaking = false;
+            isReviewPaused = false;
+            reviewIndex = 0;
+            reviewTotal = 0;
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            var record = state.records.find(function(r) { return r.id === state.viewingRecordId; });
+            if (record) {
+                goToRecordDetail(record);
+            } else {
+                goToDetail(state.currentDate);
+            }
+        }
+
+        // ================================================================
+        // 更新倒计时显示
+        // ================================================================
+        function updateTimerDisplay() {
+            var textEl = document.getElementById('reviewTimerText');
+            var circleEl = document.getElementById('reviewTimerCircle');
+            if (textEl) {
+                textEl.textContent = Math.ceil(reviewCountdown);
+            }
+            if (circleEl) {
+                var circumference = 188.5;
+                var offset = circumference * (1 - reviewCountdown / 5);
+                circleEl.style.strokeDashoffset = offset;
+                // 颜色变化
+                if (reviewCountdown <= 2) {
+                    circleEl.style.stroke = '#ea4335';
+                } else {
+                    circleEl.style.stroke = '#3b6ea5';
+                }
+            }
+        }
+
+        // ================================================================
+        // 语音朗读
+        // ================================================================
+        function speakText(text, lang) {
+            if (!('speechSynthesis' in window)) {
+                console.warn('浏览器不支持语音合成');
+                return;
+            }
+
+            // 取消当前正在播放的语音
+            window.speechSynthesis.cancel();
+
+            var utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = 0.9;
+            utterance.pitch = 1.0;
+
+            // 尝试选择更自然的语音
+            var voices = window.speechSynthesis.getVoices();
+            var matchedVoice = voices.find(function(v) { return v.lang.startsWith(lang); });
+            if (matchedVoice) {
+                utterance.voice = matchedVoice;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ================================================================
+        // 检测语言（简单判断）
+        // ================================================================
+        function detectLanguage(text) {
+            // 检测是否包含中文字符
+            if (/[\u4e00-\u9fa5]/.test(text)) {
+                return 'zh-CN';
+            }
+            // 检测是否包含西班牙语特殊字符
+            if (/[áéíóúüñ¿¡]/.test(text)) {
+                return 'es';
+            }
+            // 默认为英语
+            return 'en-US';
+        }
+
+        // ================================================================
+        // 退出复习
+        // ================================================================
+        document.getElementById('btnExitReview').addEventListener('click', function() {
+            clearInterval(reviewTimer);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            goToDetail(state.currentDate);
+        });
 
         // ================================================================
         // CALENDAR
@@ -1404,6 +1930,7 @@
             content.innerHTML = html;
             showPage('detail');
 
+
             // 绑定 Detail 按钮
             document.querySelectorAll('.detail-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -1432,8 +1959,8 @@ function goToRecordDetail(record) {
     // ===== 单词（一行两个） =====
     html += '<div style="margin-bottom:16px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">📖 单词</span>';
-    html += '<button class="add-entry-btn" data-type="words">+ 添加</button>';
+    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">📖 Words</span>';
+    html += '<button class="add-entry-btn" data-type="words">+ Add</button>';
     html += '</div>';
     html += '<div class="entry-grid" id="entry-words">';
     if (words.length === 0) {
@@ -1448,8 +1975,8 @@ function goToRecordDetail(record) {
     // ===== 短语（一行两个） =====
     html += '<div style="margin-bottom:16px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">🔗 短语</span>';
-    html += '<button class="add-entry-btn" data-type="phrases">+ 添加</button>';
+    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">🔗 Phrases</span>';
+    html += '<button class="add-entry-btn" data-type="phrases">+ Add</button>';
     html += '</div>';
     html += '<div class="entry-grid" id="entry-phrases">';
     if (phrases.length === 0) {
@@ -1464,8 +1991,8 @@ function goToRecordDetail(record) {
     // ===== 句子（每个句子单独一行） =====
     html += '<div style="margin-bottom:16px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">💬 句子</span>';
-    html += '<button class="add-entry-btn" data-type="sentences">+ 添加</button>';
+    html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">💬 Sentences</span>';
+    html += '<button class="add-entry-btn" data-type="sentences">+ Add</button>';
     html += '</div>';
     html += '<div class="entry-list" id="entry-sentences">';
     if (sentences.length === 0) {
@@ -1657,6 +2184,8 @@ function bindEntryEvents(record) {
                 goToInput(state.currentDate);
             });
 
+
+
             // Calendar nav
             document.getElementById('btnPrevMonth').addEventListener('click', function() {
                 state.calendarMonth -= 1;
@@ -1743,6 +2272,16 @@ function bindEntryEvents(record) {
                         console.error('Delete failed:', e);
                         showToast('❌ Network error', 'error');
                     });
+                }
+            });
+
+                // Review 按钮（在记录详情页）
+                document.getElementById('btnReviewRecord').addEventListener('click', function() {
+                var record = state.records.find(function(r) { return r.id === state.viewingRecordId; });
+                if (record) {
+                    goToReview(record);
+                } else {
+                    showToast('⚠️ 没有找到可复习的内容', 'error');
                 }
             });
 
