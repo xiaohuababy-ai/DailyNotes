@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Language Learning Notes · Vocabulary Builder</title>
     <style>
+
+        /* 确保记录详情页可见 */
+        #pageRecordDetail {
+            display: none;
+        }
+
+        #pageRecordDetail.active {
+            display: block !important;
+        }
+
+        /* 确保 detailContent 可见 */
+        #detailContent {
+            display: block !important;
+            min-height: 200px !important;
+            padding: 16px !important;
+            background: #f8f9fa !important;
+            border-radius: 8px !important;
+            margin: 16px 0 !important;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -659,16 +679,64 @@
     margin-top: 4px;
 }
 
+/* 整个条目：卡片和翻译区域水平排列 */
+.entry-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;  /* 小屏幕时换行 */
+}
+
+
+/* 操作按钮组（翻译和手动按钮） */
+.entry-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.entry-actions .action-btn {
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    background: #f0f4f9;
+    color: #5a6f8c;
+}
+
+.entry-actions .action-btn:hover {
+    background: #dce4ed;
+}
+
+.entry-actions .action-btn.hidden {
+    display: none;
+}
+
+
+/* 单词卡片：只包含原文和删除按钮 */
 .entry-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 4px 10px 4px 14px;
+    gap: 8px;
+    padding: 8px 12px;
     background: white;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-size: 20px;
+    border: 1px solid #dce4ed;
+    border-radius: 6px;
+    flex: 0 0 48%;  /* 占父容器宽度的 48%，留一点间距 */
+    min-width: 150px;  /* 最小宽度，防止太窄 */
 }
+
+/* 翻译区域：独立于卡片 */
+.entry-translation-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;  /* 占剩余宽度 */
+    min-width: 120px;
+}
+
 
 /* 句子条目 - 占满整行 */
 .entry-item.sentence-item {
@@ -695,6 +763,22 @@
     font-size: 12px;
     cursor: pointer;
     transition: 0.2s ease;
+}
+
+/* 删除按钮 */
+.del-btn {
+    padding: 2px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    background: #fee;
+    color: #ea4335;
+}
+
+.del-btn:hover {
+    background: #ea4335;
+    color: white;
 }
 
 .entry-item .entry-actions .del-btn {
@@ -963,6 +1047,83 @@
 }
 
 
+/* 翻译框 */
+.translation-box {
+    background: #f0f4f9;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 16px;
+    color: var(--text-secondary);
+    min-width: 60px;
+    max-width: 300px;
+    width: auto;
+    min-height: 30px;
+    outline: none;
+    pointer-events: none;
+    user-select: none;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    line-height: 1.4;
+    resize: none;
+    overflow: hidden;
+    font-family: inherit;
+    flex: 1;
+}
+
+.translation-box.hidden {
+    display: none;
+}
+
+.entry-actions .action-btn {
+    padding: 2px 10px;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    background: var(--bg);
+    color: var(--text-secondary);
+}
+
+.entry-actions .action-btn:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.entry-actions .action-btn.hidden {
+    display: none;
+}
+
+.entry-actions .manual-btn {
+    background: #e8f0fe;
+    color: var(--primary);
+}
+
+.entry-actions .manual-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.entry-actions .translate-btn {
+    background: #e6f7e6;
+    color: var(--green);
+}
+
+.entry-actions .translate-btn:hover {
+    background: var(--green);
+    color: white;
+}
+
+.show-translation-btn {
+    background: #f0f4f9;
+    color: var(--text-secondary);
+}
+
+.show-translation-btn.active {
+    background: var(--primary-light);
+    color: var(--primary);
+}
 </style>
 </head>
 <body>
@@ -1064,8 +1225,13 @@
         <div class="page" id="pageRecordDetail">
             <div class="detail-header">
                 <div class="date-title" id="recordDetailTitle">📄 Record Detail</div>
+                
                 <button class="btn btn-primary" id="btnReviewRecord" style="background:#f9ab00;color:white;">📖 Review</button>
-                <button class="btn btn-outline " id="btnBackFromRecordDetail">← Back</button>
+                <button class="btn btn-outline show-translation-btn" id="btnToggleTranslation">👁️ Show Translation</button>
+                <!--
+                <button class="btn btn-outline " id="btnBackFromRecordDetail">← Back</button> 
+                -->
+            
             </div>
             <div id="recordDetailContent"></div>
             <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between;">
@@ -1095,6 +1261,7 @@
 
     <script>
 
+        var showTranslation = false;  // 是否显示翻译
         var isRendering = false;
         var isSpeaking = false;  // 防止重复朗读
 
@@ -1376,7 +1543,15 @@
 
         function saveRecord(date, words, phrases, sentences) {
             var id = date + '_' + getNowTimestamp().split('_')[1];
-            var data = { id: id, date: date, words: words, phrases: phrases, sentences: sentences };
+            //var data = { id: id, date: date, words: words, phrases: phrases, sentences: sentences };
+            var data = {
+                id: id,
+                date: date,
+                words: words.map(function(w) { return { text: w, translation: '' }; }),
+                phrases: phrases.map(function(p) { return { text: p, translation: '' }; }),
+                sentences: sentences.map(function(s) { return { text: s, translation: '' }; })
+            };
+
             return apiFetch('/record', { method: 'POST', body: JSON.stringify(data) });
         }
 
@@ -1437,68 +1612,62 @@
         // 进入复习模式
         // ================================================================
         function goToReview(record) {
-            
-            // ⭐ 重置所有状态
-            if (reviewTimer) {
-                clearInterval(reviewTimer);
-                reviewTimer = null;
-            }
-            isRendering = false;
-            isSpeaking = false;
-            isReviewPaused = false;
-            reviewIndex = 0;
-            reviewTotal = 0;
-            reviewCountdown = 5;
-
-            // 合并所有词条
-            var items = [];
-            record.words.forEach(function(w) { items.push({ type: 'word', text: w }); });
-            record.phrases.forEach(function(p) { items.push({ type: 'phrase', text: p }); });
-            record.sentences.forEach(function(s) { items.push({ type: 'sentence', text: s }); });
-
-            if (items.length === 0) {
-                showToast('⚠️ 这条记录还没有内容可以复习', 'error');
-                return;
-            }
-
-            // 打乱顺序（Fisher-Yates 洗牌算法）
-            for (var i = items.length - 1; i > 0; i--) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var temp = items[i];
-                items[i] = items[j];
-                items[j] = temp;
-            }
-
-            reviewItems = items;
-            reviewIndex = 0;
-            reviewTotal = items.length;
-            isReviewPaused = false;
-
-            //document.getElementById('reviewTitle').textContent = '📖 Review Mode (' + record.id + ')';
-            document.getElementById('reviewTitle').textContent = '📖 Review Mode ';
-            // 退出复习时返回记录详情页
-            document.getElementById('btnExitReview').addEventListener('click', function() {
-                clearInterval(reviewTimer);
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                }
-                // 返回到记录详情页，而不是日期列表页
-                var record = state.records.find(function(r) { return r.id === state.viewingRecordId; });
-                if (record) {
-                    goToRecordDetail(record);
-                } else {
-                    goToDetail(state.currentDate);
-                }
-            });
-
-            showPage('review');
-
-            // 延迟执行，确保页面切换完成
-            setTimeout(function() {
-                renderReviewItem();
-            }, 50);
-            
+        if (reviewTimer) {
+            clearInterval(reviewTimer);
+            reviewTimer = null;
         }
+        isRendering = false;
+        isSpeaking = false;
+        isReviewPaused = false;
+        reviewIndex = 0;
+        reviewTotal = 0;
+        reviewCountdown = 5;
+
+        var items = [];
+        
+        // ⭐ 单词
+        record.words.forEach(function(w) {
+            var text = typeof w === 'string' ? w : (w.text || '');
+            items.push({ type: '单词', text: text });
+        });
+        
+        // ⭐ 短语
+        record.phrases.forEach(function(p) {
+            var text = typeof p === 'string' ? p : (p.text || '');
+            items.push({ type: '短语', text: text });
+        });
+        
+        // ⭐ 句子
+        record.sentences.forEach(function(s) {
+            var text = typeof s === 'string' ? s : (s.text || '');
+            items.push({ type: '句子', text: text });
+        });
+
+        if (items.length === 0) {
+            showToast('⚠️ 这条记录还没有内容可以复习', 'error');
+            return;
+        }
+
+        // 打乱顺序
+        for (var i = items.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = items[i];
+            items[i] = items[j];
+            items[j] = temp;
+        }
+
+        reviewItems = items;
+        reviewIndex = 0;
+        reviewTotal = items.length;
+
+        //document.getElementById('reviewTitle').textContent = '📖 复习模式 (' + record.id + ')';
+        document.getElementById('reviewTitle').textContent = '📖 Reviewing';
+        showPage('review');
+        
+        setTimeout(function() {
+            renderReviewItem();
+        }, 100);
+    }
 
         // ================================================================
         // 渲染当前复习条目
@@ -2072,142 +2241,280 @@
         // DETAIL PAGE
         // ================================================================
         function goToDetail(date) {
-            state.currentDate = date;
-            document.getElementById('detailDateTitle').textContent = '📚 ' + formatDateDisplay(date);
-            document.getElementById('detailRecordCount').textContent = 'Total ' + state.records.length + ' records';
+        state.currentDate = date;
+        document.getElementById('detailDateTitle').textContent = '📚 ' + formatDateDisplay(date);
+        document.getElementById('detailRecordCount').textContent = 'Total ' + state.records.length + ' records';
 
-            var content = document.getElementById('detailContent');
+        var content = document.getElementById('detailContent');
 
-            if (state.records.length === 0) {
-                content.innerHTML =
-                    '<div class="detail-empty"><span class="emoji-big">📭</span><p>No records for this day</p><button class="btn btn-primary" style="margin-top:16px;" id="btnStartRecordFromEmpty">Start Recording</button></div>';
-                document.getElementById('btnStartRecordFromEmpty').addEventListener('click', function() {
-                    goToInput(date);
-                });
-                showPage('detail');
-                return;
-            }
-
-            var sorted = state.records.slice().sort(function(a, b) {
-                if (a.id > b.id) return -1;
-                if (a.id < b.id) return 1;
-                return 0;
+        if (state.records.length === 0) {
+            content.innerHTML =
+                '<div class="detail-empty"><span class="emoji-big">📭</span><p>No records for this day</p><button class="btn btn-primary" style="margin-top:16px;" id="btnStartRecordFromEmpty">Start Recording</button></div>';
+            document.getElementById('btnStartRecordFromEmpty').addEventListener('click', function() {
+                goToInput(date);
             });
-
-            var html = '';
-            sorted.forEach(function(rec, idx) {
-                var time = getTimeFromId(rec.id);
-                var words = rec.words || [];
-                var phrases = rec.phrases || [];
-                var sentences = rec.sentences || [];
-
-                html += '<div class="record-card">';
-                html += '<div class="record-time" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">';
-                html += '<span>📌 #' + (idx + 1) + '  ' + time +
-                    ' <span class="id-badge">' + rec.id + '</span></span>';
-                html += '<button class="btn-icon detail-btn" data-id="' + rec.id + '">📄 Detail</button>';
-                html += '</div>';
-
-                html += '<div class="record-item"><span class="label">📖 Words</span>';
-
-                if (words.length) {
-                    words.forEach(function(w) { html += '<span class="word-tag">' + escapeHtml(w) + '</span>'; });
-                } else {
-                    html += '<span class="empty-hint">(none)</span>';
-                }
-                html += '</div>';
-                html +=
-                '<div class="record-item" style="margin-top:4px;"><span class="label">🔗 Phrases</span>';
-                if (phrases.length) {
-                    phrases.forEach(function(p) { html += '<span class="word-tag">' + escapeHtml(p) + '</span>'; });
-                } else {
-                    html += '<span class="empty-hint">(none)</span>';
-                }
-                html += '</div>';
-                html +=
-                '<div class="record-item" style="margin-top:4px;"><span class="label">💬 Sentences</span>';
-                if (sentences.length) {
-                    sentences.forEach(function(s) { html += '<span class="word-tag">' + escapeHtml(s) + '</span>'; });
-                } else {
-                    html += '<span class="empty-hint">(none)</span>';
-                }
-                html += '</div>';
-                html += '</div>';
-            });
-
-            content.innerHTML = html;
             showPage('detail');
-
-
-            // 绑定 Detail 按钮
-            document.querySelectorAll('.detail-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-            var id = this.dataset.id;
-            var record = state.records.find(function(r) { return r.id === id; });
-            if (record) {
-                goToRecordDetail(record);
-            }
-            });
-});
+            return;
         }
 
+        var sorted = state.records.slice().sort(function(a, b) {
+            if (a.id > b.id) return -1;
+            if (a.id < b.id) return 1;
+            return 0;
+        });
+
+        var html = '';
+        sorted.forEach(function(rec, idx) {
+            var time = getTimeFromId(rec.id);
+            var words = rec.words || [];
+            var phrases = rec.phrases || [];
+            var sentences = rec.sentences || [];
+
+            html += '<div class="record-card">';
+            html += '<div class="record-time" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">';
+            html += '<span>📌 #' + (idx + 1) + '  ' + time +
+                ' <span class="id-badge">' + rec.id + '</span></span>';
+            html += '<button class="btn-icon detail-btn" data-id="' + rec.id + '">📄 Detail</button>';
+            html += '</div>';
+
+            // ===== Words =====
+            html += '<div class="record-item"><span class="label">📖 Words</span>';
+            if (words.length) {
+                words.forEach(function(w) {
+                    var text = typeof w === 'string' ? w : (w.text || '');
+                    html += '<span class="word-tag">' + escapeHtml(text) + '</span>';
+                });
+            } else {
+                html += '<span class="empty-hint">(none)</span>';
+            }
+            html += '</div>';
+
+            // ===== Phrases =====
+            html += '<div class="record-item" style="margin-top:4px;"><span class="label">🔗 Phrases</span>';
+            if (phrases.length) {
+                phrases.forEach(function(p) {
+                    var text = typeof p === 'string' ? p : (p.text || '');
+                    html += '<span class="word-tag">' + escapeHtml(text) + '</span>';
+                });
+            } else {
+                html += '<span class="empty-hint">(none)</span>';
+            }
+            html += '</div>';
+
+            // ===== Sentences =====
+            html += '<div class="record-item" style="margin-top:4px;"><span class="label">💬 Sentences</span>';
+            if (sentences.length) {
+                sentences.forEach(function(s) {
+                    var text = typeof s === 'string' ? s : (s.text || '');
+                    html += '<span class="word-tag">' + escapeHtml(text) + '</span>';
+                });
+            } else {
+                html += '<span class="empty-hint">(none)</span>';
+            }
+            html += '</div>';
+
+            html += '</div>';
+        });
+
+        content.innerHTML = html;
+        showPage('detail');
+
+        // 绑定 Detail 按钮
+        document.querySelectorAll('.detail-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = this.dataset.id;
+                var record = state.records.find(function(r) { return r.id === id; });
+                if (record) {
+                    goToRecordDetail(record);
+                }
+            });
+        });
+    }
+
 // ================================================================
-// RECORD DETAIL PAGE (支持删除和新增)
+// 数据格式转换（兼容旧数据）
+// ================================================================
+function normalizeEntries(items) {
+    if (!Array.isArray(items)) return [];
+    return items.map(function(item) {
+        if (typeof item === 'string') {
+            return { text: item, translation: '' };
+        }
+        if (typeof item === 'object' && item !== null) {
+            return { text: item.text || '', translation: item.translation || '' };
+        }
+        return { text: '', translation: '' };
+    });
+}
+
+
+// ================================================================
+// 渲染单个条目（带翻译功能）
+// ================================================================
+function renderEntryItemWithTranslation(type, index, item) {
+    var text = item.text || '';
+    var translation = item.translation || '';
+    var isSentence = type === 'sentences';
+    var cls = 'entry-item';
+    if (isSentence) cls += ' sentence-item';
+
+    // 单词卡片（包含原文、翻译框、删除按钮）
+    var html = '<div class="entry-wrapper" data-type="' + type + '" data-index="' + index + '">';
+    html += '<div class="' + cls + '">';
+    html += '<span class="entry-text">' + escapeHtml(text) + '</span>';
+    html += '<button class="del-btn" data-type="' + type + '" data-index="' + index + '">✕</button>';
+    html += '</div>';
+
+
+
+    // ⭐ 翻译和操作按钮（独立于卡片之外）
+    html += '<div class="entry-translation-area">';
+    html += '<textarea class="translation-box hidden" rows="1" readonly disabled>' + escapeHtml(translation) + '</textarea>';
+    html += '<div class="entry-actions">';
+    
+    html += '<button class="action-btn manual-btn hidden" data-type="' + type + '" data-index="' + index + '">✏️ Manual</button>';
+    html += '<button class="action-btn translate-btn hidden" data-type="' + type + '" data-index="' + index + '">🌐 AI</button>';
+    
+    html += '</div>';
+    html += '</div>';
+    
+    html += '</div>';  // entry-wrapper 结束
+
+
+    
+    return html;
+}
+
+
+// ================================================================
+// 更新翻译显示状态
+// ================================================================
+function updateTranslationVisibility() {
+    var show = showTranslation;
+    var boxes = document.querySelectorAll('#recordDetailContent .translation-box');
+    var translateBtns = document.querySelectorAll('#recordDetailContent .translate-btn');
+    var manualBtns = document.querySelectorAll('#recordDetailContent .manual-btn');
+    var toggleBtn = document.getElementById('btnToggleTranslation');
+
+    boxes.forEach(function(el) {
+        el.style.display = show ? 'inline-block' : 'none';
+        if (show) {
+            // 显示后重新调整高度
+            setTimeout(function() {
+                el.style.height = 'auto';
+                el.style.height = el.scrollHeight + 'px';
+            }, 50);
+        }
+    });
+
+    translateBtns.forEach(function(el) {
+        el.style.display = show ? 'inline-block' : 'none';
+    });
+    manualBtns.forEach(function(el) {
+        el.style.display = show ? 'inline-block' : 'none';
+    });
+
+    if (toggleBtn) {
+        toggleBtn.textContent = show ? '👁️ Hide Translation' : '👁️ Show Translation';
+        toggleBtn.classList.toggle('active', show);
+    }
+}
+
+function autoResizeTextareas() {
+    document.querySelectorAll('#recordDetailContent .translation-box').forEach(function(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    });
+}
+
+// ================================================================
+// RECORD DETAIL PAGE (支持翻译显示/收起)
 // ================================================================
 function goToRecordDetail(record) {
-    state.viewingRecordId = record.id;
-    document.getElementById('recordDetailTitle').textContent = '📄 Record Detail - ' + getTimeFromId(record.id);
 
-    var content = document.getElementById('recordDetailContent');
+    // ⭐ 重置翻译显示状态（每次进入详情页默认收起）
+    showTranslation = false;
+
+    // ⭐ 确保 record 中的数据被转换并保存回 state.records
+    if (record.words && record.words.length > 0 && typeof record.words[0] === 'string') {
+        record.words = normalizeEntries(record.words);
+    }
+    if (record.phrases && record.phrases.length > 0 && typeof record.phrases[0] === 'string') {
+        record.phrases = normalizeEntries(record.phrases);
+    }
+    if (record.sentences && record.sentences.length > 0 && typeof record.sentences[0] === 'string') {
+        record.sentences = normalizeEntries(record.sentences);
+    }
+    
+    // 同步更新 state.records 中的对应记录
+    var stateRecord = state.records.find(function(r) { return r.id === record.id; });
+    if (stateRecord) {
+        stateRecord.words = record.words;
+        stateRecord.phrases = record.phrases;
+        stateRecord.sentences = record.sentences;
+    }
+
+    state.viewingRecordId = record.id;
+    var reviewTime = record.review_time || 0;
+    var timeDisplay = reviewTime > 0 ? ' ⏱️ ' + reviewTime + 'min' : '';
+    document.getElementById('recordDetailTitle').textContent = '📄 Record Detail - ' + getTimeFromId(record.id) + timeDisplay;
+
     var words = record.words || [];
     var phrases = record.phrases || [];
     var sentences = record.sentences || [];
 
+    var content = document.getElementById('recordDetailContent');
+
     var html = '';
-    // ===== 单词（一行两个） =====
+    
+    // ===== 单词 =====
     html += '<div style="margin-bottom:16px;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">';
     html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">📖 Words</span>';
-    html += '<button class="add-entry-btn" data-type="words">+ Add</button>';
+    html += '<button class="add-entry-btn btn-green" data-type="words" style="padding:2px 12px;font-size:16px;border:none;border-radius:20px;background:#34a853;color:white;cursor:pointer;">+ Add</button>';
+    html += '<span style="flex:1;"></span>';
+    //html += '<span style="font-weight:600;color:var(--text-secondary);font-size:18px;">🌐 Translation</span>';
+
+    
     html += '</div>';
-    html += '<div class="entry-grid" id="entry-words">';
+    html += '<div class="entry-list" id="entry-words">';
     if (words.length === 0) {
-        html += '<div class="entry-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;grid-column:1/3;">(无)</div>';
+        html += '<div class="entry-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;">(无)</div>';
     } else {
         words.forEach(function(w, idx) {
-            html += renderEntryItemGrid('words', idx, w, false);
+            html += renderEntryItemWithTranslation('words', idx, w);
         });
     }
     html += '</div></div>';
 
-    // ===== 短语（一行两个） =====
+    // ===== 短语 =====
     html += '<div style="margin-bottom:16px;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">';
     html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">🔗 Phrases</span>';
-    html += '<button class="add-entry-btn" data-type="phrases">+ Add</button>';
-    html += '</div>';
-    html += '<div class="entry-grid" id="entry-phrases">';
+    html += '<button class="add-entry-btn btn-green" data-type="phrases" style="padding:2px 12px;font-size:16px;border:none;border-radius:20px;background:#34a853;color:white;cursor:pointer;">+ Add</button>';
+    html += '</div>';   
+    html += '<div class="entry-list" id="entry-phrases">';
     if (phrases.length === 0) {
-        html += '<div class="entry-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;grid-column:1/3;">(无)</div>';
+        html += '<div class="entry-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;">(无)</div>';
     } else {
         phrases.forEach(function(p, idx) {
-            html += renderEntryItemGrid('phrases', idx, p, false);
+            html += renderEntryItemWithTranslation('phrases', idx, p);
         });
     }
     html += '</div></div>';
 
-    // ===== 句子（每个句子单独一行） =====
+    // ===== 句子 =====
     html += '<div style="margin-bottom:16px;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">';
     html += '<span style="font-weight:600;color:var(--text-secondary);font-size:20px;">💬 Sentences</span>';
-    html += '<button class="add-entry-btn" data-type="sentences">+ Add</button>';
+    html += '<button class="add-entry-btn btn-green" data-type="sentences" style="padding:2px 12px;font-size:16px;border:none;border-radius:20px;background:#34a853;color:white;cursor:pointer;">+ Add</button>';
     html += '</div>';
     html += '<div class="entry-list" id="entry-sentences">';
     if (sentences.length === 0) {
-        html += '<div class="entry-item sentence-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;">(无)</div>';
+        html += '<div class="entry-item" style="color:var(--text-secondary);opacity:0.5;font-size:13px;">(无)</div>';
     } else {
         sentences.forEach(function(s, idx) {
-            html += renderEntryItem('sentences', idx, s, true);
+            html += renderEntryItemWithTranslation('sentences', idx, s);
         });
     }
     html += '</div></div>';
@@ -2215,9 +2522,17 @@ function goToRecordDetail(record) {
     content.innerHTML = html;
     showPage('recordDetail');
 
-    // 绑定删除和添加事件
+    // 更新翻译显示状态
+    updateTranslationVisibility();
+
+    // 绑定事件
     bindEntryEvents(record);
+
+    // ⭐ 添加这一行：自动调整翻译框高度
+    autoResizeTextareas();
 }
+
+
 
 
 // ================================================================
@@ -2301,7 +2616,8 @@ function bindEntryEvents(record) {
             var type = this.dataset.type;
             var newText = prompt('Input new ' + (type === 'words' ? 'word' : type === 'phrases' ? 'phrase' : 'sentence') + '：');
             if (newText && newText.trim()) {
-                record[type].push(newText.trim());
+                //record[type].push(newText.trim());
+                record[type].push({ text: newText.trim(), translation: '' });
                 updateRecord(recordId, record.words, record.phrases, record.sentences).then(function(result) {
                     if (result.success) {
                         showToast('✅ successfully added', 'success');
@@ -2317,6 +2633,75 @@ function bindEntryEvents(record) {
                     }
                 });
             }
+        });
+    });
+
+
+    // ---- 手动输入翻译按钮 ----
+    document.querySelectorAll('#recordDetailContent .manual-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var type = this.dataset.type;
+        var index = parseInt(this.dataset.index);
+        var entry = record[type][index];
+        if (!entry) return;
+        
+        var currentTranslation = entry.translation || '';
+        var newTranslation = prompt('Input translation：', currentTranslation);
+        if (newTranslation !== null && newTranslation.trim() !== '') {
+            entry.translation = newTranslation.trim();
+            updateRecord(recordId, record.words, record.phrases, record.sentences).then(function(result) {
+                if (result.success) {
+                    showToast('✅ Translation Updated!', 'success');
+                    // ⭐ 记录当前翻译显示状态
+                    var wasShowing = showTranslation;
+                    // ⭐ 重新渲染详情页
+                    goToRecordDetail(record);
+                    // ⭐ 恢复翻译显示状态
+                    if (wasShowing) {
+                        showTranslation = true;
+                        updateTranslationVisibility();
+                    }
+                    // 同步更新 state 中的记录
+                    var stateRecord = state.records.find(function(r) { return r.id === recordId; });
+                    if (stateRecord) {
+                        stateRecord.words = record.words;
+                        stateRecord.phrases = record.phrases;
+                        stateRecord.sentences = record.sentences;
+                    }
+                } else {
+                    showToast('❌ fail: ' + (result.error || 'unknown issue'), 'error');
+                }
+            });
+        } else if (newTranslation !== null && newTranslation.trim() === '') {
+            // 如果用户清空了翻译，也保存空值
+            entry.translation = '';
+            updateRecord(recordId, record.words, record.phrases, record.sentences).then(function(result) {
+                if (result.success) {
+                    showToast('✅ translation cleared', 'success');
+                    var wasShowing = showTranslation;
+                    goToRecordDetail(record);
+                    if (wasShowing) {
+                        showTranslation = true;
+                        updateTranslationVisibility();
+                    }
+                    var stateRecord = state.records.find(function(r) { return r.id === recordId; });
+                    if (stateRecord) {
+                        stateRecord.words = record.words;
+                        stateRecord.phrases = record.phrases;
+                        stateRecord.sentences = record.sentences;
+                    }
+                } else {
+                    showToast('❌ failed: ' + (result.error || 'unknown issue'), 'error');
+                }
+            });
+        }
+    });
+});
+
+    // ---- 翻译按钮（调用有道API）- 暂不实现 ----
+    document.querySelectorAll('#recordDetailContent .translate-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            showToast('🌐 翻译功能开发中，敬请期待...', 'success');
         });
     });
 }
@@ -2371,6 +2756,12 @@ function bindEntryEvents(record) {
         // EVENT BINDINGS
         // ================================================================
         document.addEventListener('DOMContentLoaded', function() {
+
+            // ---- 显示翻译/收起翻译 ----
+            document.getElementById('btnToggleTranslation').addEventListener('click', function() {
+                showTranslation = !showTranslation;
+                updateTranslationVisibility();
+            });
 
             // Navigation
             document.getElementById('btnGoHome').addEventListener('click', function() {
@@ -2447,9 +2838,9 @@ function bindEntryEvents(record) {
             
 
             // Record Detail - Back
-            document.getElementById('btnBackFromRecordDetail').addEventListener('click', function() {
-                goToDetail(state.currentDate);
-            });
+            //document.getElementById('btnBackFromRecordDetail').addEventListener('click', function() {
+            //    goToDetail(state.currentDate);
+            //});
             document.getElementById('btnBackFromRecordDetail2').addEventListener('click', function() {
                 goToDetail(state.currentDate);
             });
