@@ -1,9 +1,13 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import json
 import glob
 from datetime import datetime
+import hashlib
+import time
+import uuid  # ⬅️ 添加这一行
+import requests  # ⬅️ 确保也有这一行（用于调用有道API）
 
 app = Flask(__name__)
 CORS(app)
@@ -239,6 +243,10 @@ def update_record(record_id):
         if 'sentences' in data:
             existing['sentences'] = data['sentences']
         
+         # 确保 review_time 字段存在
+        if 'review_time' not in existing:
+            existing['review_time'] = 0
+
         # 保存
         save_record_to_file(record_id, existing)
         
@@ -252,6 +260,117 @@ def update_record(record_id):
         print(f'更新记录失败: {e}')
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# ================================================================
+# 有道翻译 API 代理
+# ================================================================
+
+# ====== 请替换为你的有道智云应用信息 ======
+APP_KEY = '413abe2e25fa0cbd';
+APP_SECRET = 'ogqQhYIsceRsgyBFlPvPtjNMfFsefQxm';
+# ========================================
+
+# ⚠️ 请替换为你的有道智云应用信息
+YOUDAO_APP_KEY = '413abe2e25fa0cbd';
+YOUDAO_APP_SECRET = 'ogqQhYIsceRsgyBFlPvPtjNMfFsefQxm'
+
+
+@app.route('/translate', methods=['GET', 'POST'])
+def translate_api():
+    """
+    代理有道翻译 API
+    默认翻译成中文（zh-CHS）
+    """
+    try:
+        # 1. 获取参数
+        if request.method == 'GET':
+            q = request.args.get('q')
+            from_lang = request.args.get('from', 'es')
+        else:
+            data = request.get_json() or {}
+            q = data.get('q')
+            from_lang = data.get('from', 'es')
+            
+        
+        # 目标语言固定为中文
+        to_lang = 'zh-CHS'
+        
+        if not q or q.strip() == '':
+            return jsonify({'success': False, 'error': '缺少翻译文本'}), 400
+        
+        # 2. 生成签名参数
+        salt = str(uuid.uuid4())
+        curtime = str(int(time.time()))
+        
+        q_len = len(q)
+        if q_len <= 20:
+            input_text = q
+        else:
+            input_text = q[:10] + str(q_len) + q[-10:]
+        
+        sign_str = YOUDAO_APP_KEY + input_text + salt + curtime + YOUDAO_APP_SECRET
+        sign = hashlib.sha256(sign_str.encode('utf-8')).hexdigest()
+        
+        # 3. 构建请求参数
+        params = {
+            'q': q,
+            'from': from_lang,
+            'to': to_lang,
+            'appKey': YOUDAO_APP_KEY,
+            'salt': salt,
+            'sign': sign,
+            'signType': 'v3',
+            'curtime': curtime,
+        }
+        
+        # 4. 调用有道 API
+        response = requests.get(
+            'https://openapi.youdao.com/api',
+            params=params,
+            timeout=10
+        )
+        result = response.json()
+        
+        # 5. 处理返回结果
+        if result.get('errorCode') == '0':
+            translation = result.get('translation', [])
+            if translation and len(translation) > 0:
+                return jsonify({
+                    'success': True,
+                    'translation': translation[0],
+                    'query': result.get('query', q)
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': '翻译结果为空'
+                })
+        else:
+            # 有道 API 错误
+            error_code = result.get('errorCode')
+            error_msg = {
+                '101': '应用ID无效，请检查 YOUDAO_APP_KEY',
+                '103': '签名错误，请检查 YOUDAO_APP_SECRET',
+                '108': '请求频率超限，请稍后重试',
+                '109': '请求IP不在白名单内',
+                '202': '翻译文本过长',
+                '207': '不支持的语种类型',
+                '302': '翻译文本过长（超过限制）'
+            }.get(error_code, f'有道API错误: {error_code}')
+            
+            return jsonify({
+                'success': False,
+                'error': error_msg,
+                'errorCode': error_code
+            }), 500
+            
+    except requests.exceptions.Timeout:
+        return jsonify({'success': False, 'error': '翻译请求超时，请稍后重试'}), 504
+    except requests.exceptions.ConnectionError:
+        return jsonify({'success': False, 'error': '网络连接失败，请检查网络'}), 503
+    except Exception as e:
+        print(f'翻译失败: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ================================================================
 #  启动服务

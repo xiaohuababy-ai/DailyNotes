@@ -863,7 +863,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-     font-size: 20px;  /* ← 加上这一行 */
+    font-size: 22px;  /* ← 加上这一行 */
 }
 
 .entry-grid .entry-item .entry-actions {
@@ -887,7 +887,7 @@
 .entry-list-sentence .entry-item .entry-text {
     flex: 1;
     word-break: break-word;
-    font-size: 20px;  /* ← 加上这一行，和单词/短语保持一致 */
+    font-size: 22px;  /* ← 加上这一行，和单词/短语保持一致 */
 }
 
 /* 移动端适配 */
@@ -1612,6 +1612,23 @@
         // 进入复习模式
         // ================================================================
         function goToReview(record) {
+
+        // ⭐ iOS 语音引擎修复
+        if ('speechSynthesis' in window) {
+            // 1. 取消任何正在进行的语音
+            window.speechSynthesis.cancel();
+            // 2. 获取语音列表（激活引擎）
+            window.speechSynthesis.getVoices();
+            // 3. 触发一次短语音（在用户手势中）
+            var initUtterance = new SpeechSynthesisUtterance(' ');
+            initUtterance.lang = 'es-ES';
+            initUtterance.rate = 0.1;
+            window.speechSynthesis.speak(initUtterance);
+            setTimeout(function() {
+                window.speechSynthesis.cancel();
+            }, 200);
+        }    
+
         if (reviewTimer) {
             clearInterval(reviewTimer);
             reviewTimer = null;
@@ -1757,8 +1774,8 @@
             html += '</div>';
             html += '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:20px;">';
             html += '<button class="btn btn-outline" id="reviewPauseBtn">⏸️ Pause</button>';
-            //html += '<button class="btn btn-outline" id="reviewSkipBtn">⏭️ 跳过</button>';
-            html += '<button class="btn btn-outline" id="reviewSpeakBtn">🔊 Again</button>';
+            html += '<button class="btn btn-outline" id="reviewSkipBtn">⏭️ Skip</button>';
+            //html += '<button class="btn btn-outline" id="reviewSpeakBtn">🔊 Again</button>';
             html += '</div>';
             html += '</div>';
 
@@ -1893,7 +1910,12 @@
                 if (isDone) return;
                 isDone = true;
                 //console.log('✅ 朗读结束');
-                if (callback) callback();
+                //clearTimeout(timeoutId);
+    
+                // ⭐ 延迟 2 秒再执行回调
+                setTimeout(function() {
+                    if (callback) callback();
+                }, 1000);         
             };
             
             utterance.onerror = function(event) {
@@ -2141,7 +2163,9 @@
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
             }
-            goToDetail(state.currentDate);
+            //goToDetail(state.currentDate);
+            exitReview();
+
         });
 
         // ================================================================
@@ -2374,7 +2398,7 @@ function renderEntryItemWithTranslation(type, index, item) {
     
     html += '<button class="action-btn manual-btn hidden" data-type="' + type + '" data-index="' + index + '">✏️ Manual</button>';
     html += '<button class="action-btn translate-btn hidden" data-type="' + type + '" data-index="' + index + '">🌐 AI</button>';
-    
+
     html += '</div>';
     html += '</div>';
     
@@ -2575,6 +2599,46 @@ function renderEntryItem(type, index, text, isSentence) {
         '</div>';
 }
 
+    // ================================================================
+    // 语言检测（用于翻译时自动判断源语言）
+    // ================================================================
+    function detectLanguageForTranslate(text) {
+        if (!text || text.trim() === '') return 'auto';
+        
+        // 检测中文
+        if (/[\u4e00-\u9fa5]/.test(text)) {
+            return 'zh-CHS';
+        }
+        
+        // 检测西班牙语特殊字符
+        if (/[áéíóúüñ¿¡]/.test(text)) {
+            return 'es';
+        }
+        
+        // 检测日语（平假名或片假名）
+        if (/[\u3040-\u30ff]/.test(text)) {
+            return 'ja';
+        }
+        
+        // 检测韩语
+        if (/[\uac00-\ud7af]/.test(text)) {
+            return 'ko';
+        }
+        
+        // 检测法语特殊字符
+        if (/[àâçéèêëîïôœùûüÿ]/.test(text)) {
+            return 'fr';
+        }
+        
+        // 检测德语特殊字符
+        if (/[äöüß]/.test(text)) {
+            return 'de';
+        }
+        
+        // 默认英语
+        return 'en';
+    }
+
 // ================================================================
 // 绑定条目事件（删除 + 添加）
 // ================================================================
@@ -2699,9 +2763,70 @@ function bindEntryEvents(record) {
 });
 
     // ---- 翻译按钮（调用有道API）- 暂不实现 ----
+    //document.querySelectorAll('#recordDetailContent .translate-btn').forEach(function(btn) {
+       // btn.addEventListener('click', function() {
+          //  showToast('🌐 翻译功能开发中，敬请期待...', 'success');
+        //});
+    //});
+
+    // ---- 翻译按钮（调用有道 API） ----
     document.querySelectorAll('#recordDetailContent .translate-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            showToast('🌐 翻译功能开发中，敬请期待...', 'success');
+            var type = this.dataset.type;
+            var index = parseInt(this.dataset.index);
+            var entry = record[type][index];
+            if (!entry) return;
+            
+            var text = entry.text;
+            if (!text || text.trim() === '') {
+                showToast('⚠️ 没有可翻译的内容', 'error');
+                return;
+            }
+            
+            // 检测文本语言（自动判断源语言）
+            //var fromLang = detectLanguageForTranslate(text);
+            var fromLang = 'es-ES';
+            
+            // 显示加载状态
+            var originalText = this.textContent;
+            this.textContent = '⏳';
+            this.disabled = true;
+            
+            // 调用后端代理（默认翻译成中文）
+            var url = '/translate?q=' + encodeURIComponent(text) + '&from=' + fromLang;
+            
+            fetch(url)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success && data.translation) {
+                        entry.translation = data.translation;
+                        updateRecord(recordId, record.words, record.phrases, record.sentences)
+                            .then(function(result) {
+                                if (result.success) {
+                                    showToast('✅ 翻译完成: ' + data.translation, 'success');
+                                    // 刷新页面显示翻译
+                                    var wasShowing = showTranslation;
+                                    goToRecordDetail(record);
+                                    if (wasShowing) {
+                                        showTranslation = true;
+                                        updateTranslationVisibility();
+                                    }
+                                } else {
+                                    showToast('❌ 保存翻译失败: ' + (result.error || '未知错误'), 'error');
+                                }
+                            });
+                    } else {
+                        showToast('❌ 翻译失败: ' + (data.error || '未知错误'), 'error');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('翻译请求失败:', error);
+                    showToast('❌ 网络错误，请检查后端服务是否运行', 'error');
+                })
+                .finally(function() {
+                    btn.textContent = '🌐 翻译';
+                    btn.disabled = false;
+                });
         });
     });
 }
