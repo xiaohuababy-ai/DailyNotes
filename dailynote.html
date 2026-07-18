@@ -740,7 +740,7 @@
 /* ===== 网格布局：一行两个 ===== */
 .entry-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-top: 8px;
 }
@@ -1085,7 +1085,7 @@
         <div class="page" id="pageReview">
             <div class="detail-header">
                 <div class="date-title" id="reviewTitle">📖 Review Mode</div>
-                <button class="btn btn-outline" id="btnExitReview">✕ Exit</button>
+                <button class="btn btn-outline" id="btnExitReview">Exit</button>
             </div>
             <div id="reviewContent">
                 <!-- 由 JS 动态渲染 -->
@@ -1427,6 +1427,11 @@
         var reviewTotal = 0;
         var isRendering = false;
         var isSpeaking = false;
+        var isExiting = false;
+
+        // ⭐ 添加以下两行
+        var reviewStartTime = null;      // 复习开始时间
+        var currentReviewRecord = null;  // 当前复习的记录
 
         // ================================================================
         // 进入复习模式
@@ -1499,8 +1504,7 @@
         // 渲染当前复习条目
         // ================================================================
         function renderReviewItem() {
-
-            // ⭐ 防止重复调用
+            // 防止重复渲染
             if (isRendering) {
                 console.log('⏳ 正在渲染中，跳过本次调用');
                 return;
@@ -1508,115 +1512,242 @@
             isRendering = true;
 
             var container = document.getElementById('reviewContent');
-
-           
             if (!container) {
                 console.error('❌ reviewContent 容器不存在！');
                 isRendering = false;
                 return;
             }
 
-            // ⭐ 确保容器可见
+            // 确保容器可见
             container.style.display = 'block';
-            container.style.minHeight = '200px';      
+            container.style.minHeight = '200px';
 
-            // ⭐ 先清空容器，写入测试内容验证
-            container.innerHTML = '<div style="padding:20px;text-align:center;font-size:18px;">⏳ 加载中...</div>';  
-
+            // 复习完成
             if (reviewIndex >= reviewTotal) {
-                // 复习完成
                 container.innerHTML = `
-                    <div class="review-complete">
-                        <span class="big-emoji">🎉</span>
-                        <h2>Review Completed！</h2>
-                        <p>You've reviewed ${reviewTotal} items.</p>
-                        <button class="btn btn-primary" onclick="exitReview()">← Back to Detail</button>
+                    <div style="text-align:center;padding:60px 20px;">
+                        <div style="font-size:72px;margin-bottom:16px;">🎉</div>
+                        <h2 style="font-size:28px;color:#1e2a3e;">Review is completed!</h2>
+                        <div style="font-size:72px;margin-bottom:16px;">  </div>
+                        <p style="font-size:18px;color:#5a6f8c;"> You've reviewed ${reviewTotal} items.</p>
+                        <div style="font-size:72px;margin-bottom:16px;">  </div>
+                        <button class="btn btn-primary" onclick="exitReview()">← Back</button>
                     </div>
                 `;
-                // 停止朗读
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
                 }
+                // ⭐ 不自动退出，让用户点击按钮退出
+                // 但需要停止计时器并保存时间
+                if (reviewTimer) {
+                    clearInterval(reviewTimer);
+                    reviewTimer = null;
+                }
+                // 保存复习时间（但不退出）
+                if (reviewStartTime && currentReviewRecord) {
+                    var elapsed = Date.now() - reviewStartTime;
+                    var minutes = Math.ceil(elapsed / 60000);
+                    if (minutes > 0) {
+                        var recordId = currentReviewRecord.id;
+                        var existing = state.records.find(function(r) { return r.id === recordId; });
+                        if (existing) {
+                            var newTotal = (existing.review_time || 0) + minutes;
+                            existing.review_time = newTotal;
+                            updateRecordTime(recordId, newTotal).then(function(result) {
+                                if (result.success) {
+                                    console.log('✅ 复习时间已更新: +' + minutes + 'min, 总计: ' + newTotal + 'min');
+                                }
+                            });
+                        }
+                    }
+                    reviewStartTime = null;
+                    currentReviewRecord = null;
+                }
+                isRendering = false;
                 return;
             }
 
             var item = reviewItems[reviewIndex];
             if (!item) {
-                console.error('❌ item 为空', reviewIndex, reviewItems);
+                console.error('❌ item 为空');
                 isRendering = false;
                 return;
             }
 
-            console.log('📝 当前条目:', item);      
-
             var progress = (reviewIndex + 1) + ' / ' + reviewTotal;
+            var textToSpeak = item.text || '';
 
-            // ⭐ 构建 HTML（使用简单样式，避免 CSS 问题）
+            // 构建 HTML
             var html = '';
             html += '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;padding:20px;">';
             html += '<div style="background:white;border-radius:16px;padding:40px 30px;max-width:600px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:2px solid #e8f0fe;text-align:center;">';
-            html += '<span style="font-size:14px;color:#5a6f8c;background:#f0f4f9;padding:4px 16px;border-radius:30px;display:inline-block;margin-bottom:12px;">' + item.type + '</span>';
-            html += '<div style="font-size:32px;font-weight:600;color:#1e2a3e;padding:16px 0;word-break:break-word;">' + escapeHtml(item.text) + '</div>';
+            //html += '<span style="font-size:14px;color:#5a6f8c;background:#f0f4f9;padding:4px 16px;border-radius:30px;display:inline-block;margin-bottom:12px;">' + item.type + '</span>';
+            html += '<div style="font-size:32px;font-weight:600;color:#1e2a3e;padding:16px 0;word-break:break-word;">' + escapeHtml(textToSpeak) + '</div>';
             html += '<div style="font-size:14px;color:#5a6f8c;margin-top:8px;">' + progress + '</div>';
+            html += '<div style="font-size:14px;color:#5a6f8c;margin-top:4px;" id="reviewStatus">⏳ 准备中...</div>';
             html += '</div>';
             html += '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:20px;">';
-            html += '<button class="btn btn-outline" id="reviewPauseBtn" style="padding:8px 20px;">⏸️ pause</button>';
-            html += '<button class="btn btn-outline" id="reviewSkipBtn" style="padding:8px 20px;">⏭️ skip</button>';
-            html += '<button class="btn btn-outline" id="reviewSpeakBtn" style="padding:8px 20px;">🔊 again</button>';
+            html += '<button class="btn btn-outline" id="reviewPauseBtn">⏸️ Pause</button>';
+            //html += '<button class="btn btn-outline" id="reviewSkipBtn">⏭️ 跳过</button>';
+            html += '<button class="btn btn-outline" id="reviewSpeakBtn">🔊 Again</button>';
             html += '</div>';
             html += '</div>';
 
-            console.log('📝 HTML:', html);
             container.innerHTML = html;
-            console.log('✅ 内容已设置');
 
-            // 重置倒计时
-            reviewCountdown = 5;
-            updateTimerDisplay();
-
-            // ⭐ 自动朗读（防止重复朗读）
-            isSpeaking = false;
-            setTimeout(function() {
-                if (!isSpeaking) {
-                    isSpeaking = true;
-                    speakText(item.text, detectLanguage(item.text));
-                }
-            }, 2000);
-
-
-
-            // ⭐ 清除旧计时器
+            // 清除旧计时器
             if (reviewTimer) {
                 clearInterval(reviewTimer);
                 reviewTimer = null;
             }
 
-            // ⭐ 启动计时器
+            // 检查文本是否为空
+            if (!textToSpeak || textToSpeak.trim() === '') {
+                // 文本为空，直接跳转
+                isRendering = false;
+                reviewIndex++;
+                renderReviewItem();
+                return;
+            }
+
+            // ============================================================
+            // ⭐ 核心流程：等待5秒 → 朗读 → 朗读完毕跳转
+            // ============================================================
+            var statusEl = document.getElementById('reviewStatus');
+            var waitSeconds = 5;
+            var currentWait = waitSeconds;
+
+            //if (statusEl) statusEl.textContent = '📖 Please read (' + currentWait + 's)';
+
+            if (statusEl) {
+                statusEl.style.fontSize = '18px';  // ⭐ 在这里添加
+                statusEl.textContent = '📖 Please read (' + currentWait + 's)';
+            }
+
+            // 启动等待计时器
             reviewTimer = setInterval(function() {
                 if (isReviewPaused) return;
-                
-                reviewCountdown -= 0.1;
-                if (reviewCountdown <= 0) {
-                    reviewCountdown = 0;
-                    updateTimerDisplay();
-                    // ⭐ 进入下一个
-                    isRendering = false;
-                    reviewIndex++;
-                    renderReviewItem();
-                    return;
-                } else {
-                    updateTimerDisplay();
+
+                currentWait -= 0.1;
+                if (statusEl) {
+                    statusEl.style.fontSize = '18px';
+                    statusEl.textContent = '📖 Please read (' + Math.ceil(currentWait) + 's)';
+                }
+
+                if (currentWait <= 0) {
+                    // 3秒结束 → 清除计时器 → 开始朗读
+                    clearInterval(reviewTimer);
+                    reviewTimer = null;
+
+                    //if (statusEl) statusEl.textContent = '🔊 reviewing...';
+
+                    // ⭐ 朗读当前词条，朗读结束后自动跳转
+                    speakTextWithCallback(
+                        textToSpeak,
+                        'es-ES',  // 强制西班牙语
+                        function() {
+                            // 朗读完成 → 跳转到下一个
+                            isSpeaking = false;
+                            isRendering = false;
+                            reviewIndex++;
+                            renderReviewItem();
+                        }
+                    );
                 }
             }, 100);
 
+            // 绑定控制按钮
             bindReviewControls();
-            
-            // ⭐ 释放锁（但注意：计时器可能会立即触发下一个）
-            // 延迟释放，确保计时器已经启动
+
+            // 延迟释放锁
             setTimeout(function() {
                 isRendering = false;
             }, 50);
+        }
 
+        // ================================================================
+        // 带回调的语音朗读（朗读结束后执行 callback）
+        // ================================================================
+        function speakTextWithCallback(text, lang, callback) {
+
+            //console.log('speakTextWithCallback is called...');
+
+            if (!('speechSynthesis' in window)) {
+                console.warn('⚠️ 浏览器不支持语音合成');
+                if (callback) callback();
+                return;
+            }
+            
+            // ⭐ 检查文本是否有效
+            if (!text || text.trim() === '') {
+                console.warn('⚠️ 文本为空，跳过朗读');
+                if (callback) callback();
+                return;
+            }
+            
+            // ⭐ 取消当前朗读（但需要捕获可能的错误）
+            try {
+                window.speechSynthesis.cancel();
+            } catch (e) {
+                console.warn('取消朗读时出错:', e);
+            }
+            
+            var utterance = new SpeechSynthesisUtterance(text);
+            //utterance.lang = lang || 'en-US';
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.85;
+            utterance.pitch = 1.0;
+            
+            // 匹配语音
+            var voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                // 语音列表还没加载，等待加载完成后再朗读
+                window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.onvoiceschanged = null;  // 防止重复触发
+                speakTextWithCallback(text, lang, callback);
+                };
+                return;
+            }
+
+            var matchedVoice = voices.find(function(v) { return v.lang === lang; });
+            if (!matchedVoice) {
+                matchedVoice = voices.find(function(v) { return v.lang.startsWith(lang.split('-')[0]); });
+            }
+            if (matchedVoice) {
+                utterance.voice = matchedVoice;
+            }
+            
+            // ⭐ 标记是否已完成
+            var isDone = false;
+            
+            utterance.onend = function() {
+                if (isDone) return;
+                isDone = true;
+                //console.log('✅ 朗读结束');
+                if (callback) callback();
+            };
+            
+            utterance.onerror = function(event) {
+            // ⭐ 忽略 canceled 和 interrupted 错误
+            if (event.error === 'canceled' || event.error === 'interrupted') {
+                console.log('⏹️ 朗读被中断 (', event.error, ')，忽略');
+                return;
+            }
+            
+            if (isDone) return;
+            isDone = true;
+            console.warn('⚠️ 朗读出错:', event.error);
+            
+            if (callback) callback();
+            };
+            
+            // ⭐ 尝试朗读，捕获可能的异常
+            try {
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.error('❌ 朗读失败:', e);
+                if (callback) callback();
+            }
         }
 
         // ================================================================
@@ -1651,6 +1782,11 @@
                         clearInterval(reviewTimer);
                         reviewTimer = null;
                     }
+
+                // ⭐ 取消当前朗读
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
                     isRendering = false;
                     reviewIndex++;
                     renderReviewItem();
@@ -1658,15 +1794,33 @@
             }
 
             if (speakBtn) {
-                var newSpeak = speakBtn.cloneNode(true);
-                speakBtn.parentNode.replaceChild(newSpeak, speakBtn);
-                newSpeak.addEventListener('click', function() {
-                    var item = reviewItems[reviewIndex];
-                    if (item) {
-                        speakText(item.text, detectLanguage(item.text));
+            var newSpeak = speakBtn.cloneNode(true);
+            speakBtn.parentNode.replaceChild(newSpeak, speakBtn);
+            newSpeak.addEventListener('click', function() {
+                if (confirm('🔄 Repeat?')) {
+                    if ('speechSynthesis' in window) {
+                        window.speechSynthesis.cancel();
                     }
-                });
-            }
+                    if (reviewTimer) {
+                        clearInterval(reviewTimer);
+                        reviewTimer = null;
+                    }
+                    // 重新洗牌
+                    for (var i = reviewItems.length - 1; i > 0; i--) {
+                        var j = Math.floor(Math.random() * (i + 1));
+                        var temp = reviewItems[i];
+                        reviewItems[i] = reviewItems[j];
+                        reviewItems[j] = temp;
+                    }
+                    reviewIndex = 0;
+                    isSpeaking = false;
+                    isRendering = false;
+                    isReviewPaused = false;
+                    renderReviewItem();
+                    showToast('🔄 review again!');
+                }
+            });
+        }
         }
 
         function exitReview() {
@@ -1717,6 +1871,9 @@
         // 语音朗读
         // ================================================================
         function speakText(text, lang) {
+
+            console.log('speakText is called...');
+
             if (!('speechSynthesis' in window)) {
                 console.warn('浏览器不支持语音合成');
                 return;
@@ -1726,33 +1883,84 @@
             window.speechSynthesis.cancel();
 
             var utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
-            utterance.rate = 0.9;
+            //utterance.lang = lang;
+            utterance.lang = 'es-ES';
+            utterance.rate = 0.8;
             utterance.pitch = 1.0;
 
             // 尝试选择更自然的语音
             var voices = window.speechSynthesis.getVoices();
-            var matchedVoice = voices.find(function(v) { return v.lang.startsWith(lang); });
+            var matchedVoice = null;
+            
+            // 1. 精确匹配（如 'es-ES'）
+            matchedVoice = voices.find(function(v) { return v.lang === lang; });
+            
+            // 2. 前缀匹配（如 'es'）
+            if (!matchedVoice) {
+                var prefix = lang.split('-')[0];
+                matchedVoice = voices.find(function(v) { return v.lang.startsWith(prefix); });
+            }
+            
+            // 3. 针对西班牙语的备选匹配
+            if (!matchedVoice && lang.startsWith('es')) {
+                matchedVoice = voices.find(function(v) { 
+                    return v.lang.includes('es') && v.lang.includes('ES');
+                });
+                if (!matchedVoice) {
+                    matchedVoice = voices.find(function(v) { 
+                        return v.lang.includes('es') || v.name.includes('Spanish');
+                    });
+                }
+            }
+            
             if (matchedVoice) {
                 utterance.voice = matchedVoice;
+                console.log('🔊 朗读语言:', lang, '→ 使用语音:', matchedVoice.lang, matchedVoice.name);
+            } else {
+                console.warn('⚠️ 未找到匹配语音 (', lang, ')，使用系统默认');
             }
+            
+            // ⭐ 忽略 interrupted 和 canceled
+            utterance.onerror = function(event) {
+                if (event.error === 'canceled' || event.error === 'interrupted') {
+                    console.log('⏹️ 重读被中断，忽略');
+                    return;
+                }
+                console.warn('⚠️ 重读出错:', event.error);
+            };
+            
+            try {
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {}
+        }
+                
 
-            window.speechSynthesis.speak(utterance);
+        // ================================================================
+        // 初始化语音（页面加载时调用）
+        // ================================================================
+        function initSpeech() {
+            if ('speechSynthesis' in window) {
+                // 预加载语音列表
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = function() {
+                    //console.log('✅ 语音列表已加载，共', window.speechSynthesis.getVoices().length, '个语音');
+                };
+            }
         }
 
         // ================================================================
         // 检测语言（简单判断）
         // ================================================================
         function detectLanguage(text) {
-            // 检测是否包含中文字符
+            // 检测中文
             if (/[\u4e00-\u9fa5]/.test(text)) {
                 return 'zh-CN';
             }
-            // 检测是否包含西班牙语特殊字符
-            if (/[áéíóúüñ¿¡]/.test(text)) {
-                return 'es';
+            // 检测西班牙语（包含特殊字符或常见西语词）
+            if (/[áéíóúüñ¿¡]/.test(text) || /^(hola|gracias|adios|como|que|por|para|si|no|yo|tu|el|la|los|las|de|en|con|sin|por|para)/i.test(text.trim())) {
+                return 'es-ES';
             }
-            // 默认为英语
+            // 默认英语
             return 'en-US';
         }
 
@@ -2063,7 +2271,7 @@ function bindEntryEvents(record) {
         btn.addEventListener('click', function() {
             var type = this.dataset.type;
             var index = parseInt(this.dataset.index);
-            if (confirm('删除这个' + (type === 'words' ? '单词' : type === 'phrases' ? '短语' : '句子') + '？')) {
+            if (confirm('Delete this ' + (type === 'words' ? 'word' : type === 'phrases' ? 'phrase' : 'sentence') + '？')) {
                 // 从 record 中移除
                 record[type].splice(index, 1);
                 // 更新后端
@@ -2091,12 +2299,12 @@ function bindEntryEvents(record) {
     document.querySelectorAll('#recordDetailContent .add-entry-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var type = this.dataset.type;
-            var newText = prompt('输入新的' + (type === 'words' ? '单词' : type === 'phrases' ? '短语' : '句子') + '：');
+            var newText = prompt('Input new ' + (type === 'words' ? 'word' : type === 'phrases' ? 'phrase' : 'sentence') + '：');
             if (newText && newText.trim()) {
                 record[type].push(newText.trim());
                 updateRecord(recordId, record.words, record.phrases, record.sentences).then(function(result) {
                     if (result.success) {
-                        showToast('✅ 已添加', 'success');
+                        showToast('✅ successfully added', 'success');
                         goToRecordDetail(record);
                         var stateRecord = state.records.find(function(r) { return r.id === recordId; });
                         if (stateRecord) {
@@ -2105,7 +2313,7 @@ function bindEntryEvents(record) {
                             stateRecord.sentences = record.sentences;
                         }
                     } else {
-                        showToast('❌ 添加失败: ' + (result.error || '未知错误'), 'error');
+                        showToast('❌ failed: ' + (result.error || 'unknown issue'), 'error');
                     }
                 });
             }
@@ -2288,6 +2496,7 @@ function bindEntryEvents(record) {
             console.log('事件绑定已执行');
 
             // Initial load
+            initSpeech();
             renderCalendar();
             showPage('calendar');
         });
